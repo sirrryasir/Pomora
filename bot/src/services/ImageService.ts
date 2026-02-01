@@ -1,4 +1,4 @@
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { RoomSession } from './TimerService.js';
 import path from 'path';
 import fs from 'fs';
@@ -7,7 +7,19 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class ImageService {
-    constructor() { }
+    constructor() {
+        // Register local fonts for guaranteed rendering in all environments
+        const localFontPath = path.resolve(__dirname, '../../assets/fonts/font.ttf');
+        const localFontRegularPath = path.resolve(__dirname, '../../assets/fonts/font-regular.ttf');
+
+        if (fs.existsSync(localFontPath)) {
+            GlobalFonts.registerFromPath(localFontPath, 'CustomSans');
+        }
+
+        if (fs.existsSync(localFontRegularPath)) {
+            GlobalFonts.registerFromPath(localFontRegularPath, 'CustomSansRegular');
+        }
+    }
 
     async generateLeaderboardCard(guildName: string, timeframe: string, entries: any[], client: any): Promise<Buffer> {
         const width = 1000;
@@ -29,12 +41,12 @@ export class ImageService {
         ctx.fillStyle = colors.bg;
         ctx.fillRect(0, 0, width, height);
 
-        ctx.font = 'bold 65px sans-serif';
+        ctx.font = 'bold 65px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.accent;
         ctx.textAlign = 'center';
         ctx.fillText('POMOSOM CHAMPIONS', width / 2, 100);
 
-        ctx.font = 'bold 22px sans-serif';
+        ctx.font = 'bold 22px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
         ctx.fillText(`TOP STUDY PERFORMANCE • ${timeframe.toUpperCase()}`, width / 2, 145);
 
@@ -80,15 +92,15 @@ export class ImageService {
                 ctx.restore();
 
                 ctx.textAlign = 'center';
-                ctx.font = 'bold 24px sans-serif';
+                ctx.font = 'bold 24px CustomSans, Arial, sans-serif';
                 ctx.fillStyle = colors.textMuted;
                 ctx.fillText(config.rank, config.x, podiumY + (config.size / 2) + 45);
 
-                ctx.font = 'bold 32px sans-serif';
+                ctx.font = 'bold 32px CustomSans, Arial, sans-serif';
                 ctx.fillStyle = colors.textMain;
                 ctx.fillText(user?.displayName || 'Unknown', config.x, podiumY + (config.size / 2) + 90);
 
-                ctx.font = 'bold 26px sans-serif';
+                ctx.font = 'bold 26px CustomSans, Arial, sans-serif';
                 ctx.fillStyle = colors.accent;
                 ctx.fillText(`${hours} hours`, config.x, podiumY + (config.size / 2) + 130);
             } catch (e) { }
@@ -107,7 +119,7 @@ export class ImageService {
             this.drawRoundedRect(ctx, rowX, y, rowWidth, rowHeight, 37.5);
             ctx.fill();
 
-            ctx.font = 'bold 30px sans-serif';
+            ctx.font = 'bold 30px CustomSans, Arial, sans-serif';
             ctx.fillStyle = colors.textMain;
             ctx.textAlign = 'left';
             ctx.fillText((i + 1).toString(), rowX + 40, y + 48);
@@ -137,12 +149,12 @@ export class ImageService {
 
             ctx.textAlign = 'right';
             ctx.fillStyle = colors.accent;
-            ctx.font = 'bold 30px sans-serif';
+            ctx.font = 'bold 30px CustomSans, Arial, sans-serif';
             ctx.fillText(timeStr, rowX + rowWidth - 40, y + 48);
         }
 
         ctx.textAlign = 'center';
-        ctx.font = '20px sans-serif';
+        ctx.font = '20px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
         ctx.fillText(`Data updated hourly • Powered by PomoSom`, width / 2, height - 30);
 
@@ -196,7 +208,7 @@ export class ImageService {
                 this.drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 6);
 
                 ctx.fillStyle = p.isActive ? '#FFFFFF' : '#A1A1AA';
-                ctx.font = 'bold 10px Arial';
+                ctx.font = 'bold 10px CustomSans, Arial, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(p.isActive ? 'PRESENT' : 'AWAY', badgeX + badgeWidth / 2, badgeY + 13);
 
@@ -208,18 +220,18 @@ export class ImageService {
                 const elapsedStr = h > 0 ? `${h}h ${m}m` : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
                 ctx.fillStyle = '#71717A';
-                ctx.font = '500 10px Arial';
+                ctx.font = '500 10px CustomSans, Arial, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(elapsedStr, x + avatarSize / 2, badgeY + 32);
             } catch (err) { }
         }
 
         try {
-            const logoPath = path.resolve(__dirname, '../../../web/public/images/pomo_icon.png');
+            const logoPath = path.resolve(__dirname, '../../assets/images/pomo_icon.png');
             if (fs.existsSync(logoPath)) {
                 const logo = await loadImage(logoPath);
                 const headerText = channelName.toUpperCase();
-                ctx.font = 'bold 22px Arial';
+                ctx.font = 'bold 22px CustomSans, Arial, sans-serif';
                 const textWidth = ctx.measureText(headerText).width;
                 const logoSize = 32;
                 const totalWidth = logoSize + 14 + textWidth;
@@ -267,10 +279,10 @@ export class ImageService {
 
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FAFAFA';
-            ctx.font = 'bold 64px Arial';
+            ctx.font = 'bold 64px CustomSans, Arial, sans-serif';
             ctx.fillText(timeStr, centerX, centerY + 15);
 
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 16px CustomSans, Arial, sans-serif';
             ctx.fillStyle = session.type === 'focus' ? '#FF6B35' : '#43B581';
             ctx.fillText(session.type.toUpperCase(), centerX, centerY + 56);
         }
