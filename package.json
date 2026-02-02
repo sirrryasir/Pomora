@@ -1,5 +1,5 @@
 {
-    "name": "pomora",
+    "name": "@pomora/core",
     "version": "1.0.0",
     "private": true,
     "workspaces": [
@@ -7,6 +7,10 @@
         "web"
     ],
     "scripts": {
+        "build:bot": "bun run --filter=@pomora/discord-bot build",
+        "build:web": "bun run --filter=@pomora/web build",
+        "start:bot": "bun run --filter=@pomora/discord-bot start",
+        "start:web": "bun run --filter=@pomora/web start",
         "dev:bot": "cd bot && bun run start",
         "dev:web": "cd web && bun run dev"
     }
