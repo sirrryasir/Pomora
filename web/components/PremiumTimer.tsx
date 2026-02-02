@@ -6,8 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useSettings } from '@/components/SettingsContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export function PremiumTimer({ onTypeChange }: { onTypeChange?: (type: 'focus' | 'short_break' | 'long_break') => void }) {
+export function PremiumTimer({
+    onTypeChange,
+    onRunningChange,
+    onFocusComplete
+}: {
+    onTypeChange?: (type: 'focus' | 'short_break' | 'long_break') => void,
+    onRunningChange?: (isRunning: boolean) => void,
+    onFocusComplete?: () => void
+}) {
     const {
         remainingTime,
         isRunning,
@@ -20,11 +31,18 @@ export function PremiumTimer({ onTypeChange }: { onTypeChange?: (type: 'focus' |
         setType,
         formatTime,
         progress,
-    } = useTimer();
+    } = useTimer(onFocusComplete);
+
+    const { theme: currentTheme, setTheme } = useTheme();
+    const { settings } = useSettings();
 
     useEffect(() => {
         onTypeChange?.(type);
     }, [type, onTypeChange]);
+
+    useEffect(() => {
+        onRunningChange?.(isRunning);
+    }, [isRunning, onRunningChange]);
 
     const getTheme = () => {
         switch (type) {
@@ -67,7 +85,31 @@ export function PremiumTimer({ onTypeChange }: { onTypeChange?: (type: 'focus' |
 
     return (
         <div className="w-full max-w-xl mx-auto px-2">
-            <div className="bg-white/10 backdrop-blur-md rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 flex flex-col items-center gap-8 md:gap-10 border border-white/10 shadow-2xl">
+            <div className="relative bg-white/10 backdrop-blur-md rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 flex flex-col items-center gap-8 md:gap-10 border border-white/10 shadow-2xl overflow-hidden">
+                {/* Glowing Progress Line */}
+                <div className="absolute top-0 left-0 w-full h-[6px] bg-white/5 overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{
+                            width: `${progress}%`,
+                            backgroundColor: type === 'focus' ? '#f97316' : type === 'short_break' ? '#10b981' : '#3b82f6'
+                        }}
+                        transition={{ duration: 0.5, ease: "linear" }}
+                        className="h-full relative"
+                    >
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 blur-[8px] opacity-50 bg-inherit" />
+                        <div className="absolute inset-x-0 h-[2px] top-0 bg-white/40 mix-blend-overlay" />
+
+                        {/* Animated Head (Sparkle) */}
+                        <motion.div
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white blur-[10px]"
+                        />
+                    </motion.div>
+                </div>
+
                 {/* Type Toggles */}
                 <div className="flex justify-center gap-1 p-1 bg-black/10 rounded-xl md:rounded-2xl w-full max-w-sm overflow-x-auto no-scrollbar">
                     {(['focus', 'short_break', 'long_break'] as const).map((t) => (

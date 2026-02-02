@@ -3,6 +3,56 @@ import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+export async function PATCH(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value;
+                },
+                set(name: string, value: string, options: any) {
+                    cookieStore.set({ name, value, ...options });
+                },
+                remove(name: string, options: any) {
+                    cookieStore.delete({ name, ...options });
+                },
+            },
+        }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { content } = await request.json();
+    if (!content) {
+        return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase
+        .from('notes')
+        .update({ content })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error(`[API/NOTES/PATCH/${id}] Database Error:`, error.message);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+}
+
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }

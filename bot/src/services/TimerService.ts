@@ -69,10 +69,8 @@ export class TimerService {
         const room = this.rooms.get(channelId);
         if (room) {
             room.participants.delete(userId);
-
-            if (room.participants.size === 0) {
-                this.stopRoom(channelId);
-            }
+            // Do NOT stop the room here. 
+            // The room will stop at the end of the stage if size is 0.
         }
     }
 
@@ -102,6 +100,10 @@ export class TimerService {
         }, 1000);
 
         this.intervals.set(channelId, interval);
+    }
+
+    public stopRoomCleanup(channelId: string) {
+        this.stopRoom(channelId);
     }
 
     private stopRoom(channelId: string) {

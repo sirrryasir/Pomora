@@ -112,7 +112,7 @@ export function BotNavbar({
                                 className="bg-orange-500 text-white py-4 px-6 rounded-2xl font-black uppercase tracking-wider mt-6 text-center shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
                                 onClick={() => setIsInternalMenuOpen(false)}
                             >
-                                Invite Pomora Now
+                                Invite Pomora Bot Now
                             </Link>
                         </nav>
                     </motion.div>

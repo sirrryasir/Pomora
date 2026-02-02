@@ -62,3 +62,14 @@ ALTER TABLE public.guild_configs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Public guild_stats are viewable by everyone" ON public.guild_stats FOR SELECT USING (true);
 CREATE POLICY "Public guild_configs are viewable by everyone" ON public.guild_configs FOR SELECT USING (true);
+
+-- 5. Active Channel Messages (Persistence for Timer Messages)
+CREATE TABLE IF NOT EXISTS public.active_channel_messages (
+  channel_id TEXT PRIMARY KEY,
+  guild_id TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.active_channel_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public active_channel_messages are viewable by everyone" ON public.active_channel_messages FOR SELECT USING (true);

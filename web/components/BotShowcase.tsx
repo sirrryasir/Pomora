@@ -210,10 +210,10 @@ export function BotShowcase() {
 
                             <div className="space-y-8">
                                 {[
-                                    { title: 'Zero-Friction Pomodoro', desc: 'No more !start or !join. The bot detects when a voice channel becomes active and manages sessions automatically.', icon: Zap },
-                                    { title: 'Interactive Status Cards', desc: 'A dynamically updated, beautifully rendered image appears in your chat, showing exactly who is in deep focus.', icon: BarChart3 },
-                                    { title: 'Automated Room Analytics', desc: 'Get daily and weekly PDF summaries of your server&apos;s productivity performance sent to any channel.', icon: BookOpen },
-                                    { title: 'Competitive Leaderboards', desc: 'Gamify your study hub with server-wide rankings. Earn badges and roles based on your focus hours.', icon: Trophy },
+                                    { title: 'Mandatory Setup Control', desc: 'Secure and precise. Admins explicitly designate study rooms to ensure tracking is 100% accurate and intentional.', icon: Zap },
+                                    { title: 'Interactive Status Cards', desc: 'A dynamically updated, beautifully rendered image appears in your voice channel, showing exactly who is in deep focus.', icon: BarChart3 },
+                                    { title: 'Persistent Timer Logic', desc: 'Focus sessions survive brief disconnects. Timers only pause or stop when the current stage completes, maintaining flow.', icon: Clock },
+                                    { title: 'Real-Time Server Analytics', desc: 'No mock data. Get daily and weekly PDF summaries of your server\'s actual productivity performance.', icon: Trophy },
                                 ].map((feature, i) => (
                                     <motion.div
                                         key={i}

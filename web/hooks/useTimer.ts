@@ -10,7 +10,7 @@ const TICKING_SOUNDS: Record<TickingSound, string | null> = {
     fast: '/sounds/ticking-fast.mp3',
 };
 
-export const useTimer = () => {
+export const useTimer = (onFocusComplete?: () => void) => {
     const { settings, isLoaded } = useSettings();
 
     const [remainingTime, setRemainingTime] = useState(settings.focusTime * 60);
@@ -179,6 +179,7 @@ export const useTimer = () => {
                         let shouldAutoStart = false;
                         if (type === 'focus') {
                             incrementDailySessions();
+                            onFocusComplete?.(); // Trigger callback
                             nextType = round % settings.longBreakInterval === 0 ? 'long_break' : 'short_break';
                             setRound(r => r + 1);
                             shouldAutoStart = settings.autoStartBreaks;
@@ -200,7 +201,7 @@ export const useTimer = () => {
             clearInterval(timerRef.current);
         }
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [isRunning, remainingTime, type, round, settings, isReady, playAlarm, playTick, incrementDailySessions]);
+    }, [isRunning, remainingTime, type, round, settings, isReady, playAlarm, playTick, incrementDailySessions, onFocusComplete]);
 
     // Notification Permission
     useEffect(() => {

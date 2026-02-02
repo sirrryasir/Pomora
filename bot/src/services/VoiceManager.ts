@@ -71,15 +71,8 @@ export class VoiceManager {
 
         this.timerService.joinRoom(userId, guildId, channelId);
 
-        const now = Date.now();
-        const lastJoin = this.processedJoins.get(channelId) || 0;
-
-        if (now - lastJoin > 3000) {
-            this.processedJoins.set(channelId, now);
-            await this.updateStatusMessage(guildId, channelId, true, true);
-        } else {
-            await this.updateStatusMessage(guildId, channelId, true, false);
-        }
+        // Always force a new status message on join for instant feedback
+        await this.updateStatusMessage(guildId, channelId, true, true);
     }
 
     async handleUserLeave(state: VoiceState) {
@@ -95,7 +88,8 @@ export class VoiceManager {
 
         const room = this.timerService.getRoomSession(channelId);
         if (room) {
-            await this.updateStatusMessage(guildId, channelId, true);
+            // Always force a new status message on leave to reflect current participants
+            await this.updateStatusMessage(guildId, channelId, true, true);
         }
     }
 
@@ -115,6 +109,20 @@ export class VoiceManager {
 
         for (const [userId] of room.participants) {
             this.dbService.logSession(userId, room.guildId, durationMins, room.type);
+        }
+
+        if (room.participants.size === 0) {
+            // Clean up and stop if no one is left at the end of the stage
+            const lastMsgId = await this.dbService.getActiveMessage(room.channelId);
+            if (lastMsgId) {
+                const channel = await this.client.channels.fetch(room.channelId).catch(() => null);
+                if (channel && channel.isVoiceBased()) {
+                    await (channel as any).messages.delete(lastMsgId).catch(() => { });
+                }
+                await this.dbService.deleteActiveMessage(room.channelId);
+            }
+            this.timerService.stopRoomCleanup(room.channelId);
+            return;
         }
 
         await this.updateStatusMessage(room.guildId, room.channelId, true, true);
@@ -227,18 +235,28 @@ export class VoiceManager {
                 }
             }
 
-            const lastMsgId = this.statusMessages.get(channelId);
+            let lastMsgId = this.statusMessages.get(channelId);
             const messageOptions: any = { content, embeds: [embed], components: [row] };
             if (attachment) {
                 messageOptions.files = [attachment];
+            }
+
+            // Check database for persistent message ID if memory doesn't have it
+            if (!lastMsgId) {
+                lastMsgId = await this.dbService.getActiveMessage(channelId);
             }
 
             if (lastMsgId && !forceNew) {
                 try {
                     const msg = await voiceChannel.messages.fetch(lastMsgId);
                     await msg.edit(messageOptions);
+                    this.statusMessages.set(channelId, lastMsgId); // Sync back to memory
                     return;
-                } catch (err) { }
+                } catch (err) {
+                    // If edit fails, we'll try to delete (if permissions/exists) and send new one
+                    await this.dbService.deleteActiveMessage(channelId);
+                    this.statusMessages.delete(channelId);
+                }
             }
 
             if (lastMsgId) {
@@ -246,10 +264,12 @@ export class VoiceManager {
                     const oldMsg = await voiceChannel.messages.fetch(lastMsgId);
                     await oldMsg.delete().catch(() => { });
                 } catch (err) { }
+                await this.dbService.deleteActiveMessage(channelId);
             }
 
             const newMsg = await voiceChannel.send(messageOptions);
             this.statusMessages.set(channelId, newMsg.id);
+            await this.dbService.setActiveMessage(channelId, guildId, newMsg.id);
         } catch (error) {
             console.error('Status update error:', error);
         }

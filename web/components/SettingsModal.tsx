@@ -192,6 +192,19 @@ export function SettingsModal() {
                                 <br />Navbar & Footer follow system preference.
                             </p>
                         </div>
+
+                        <div className="space-y-4 pt-4 border-t border-border/50">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label className="text-sm font-bold">Dark Mode when running</Label>
+                                    <p className="text-[10px] text-foreground/40 lowercase">Switch to dark mode automatically</p>
+                                </div>
+                                <Switch
+                                    checked={settings.darkModeWhenRunning}
+                                    onCheckedChange={(checked: boolean) => updateSettings({ darkModeWhenRunning: checked })}
+                                />
+                            </div>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="sound" className="space-y-8">
@@ -216,11 +229,11 @@ export function SettingsModal() {
                                 <select
                                     value={settings.tickingSound}
                                     onChange={(e) => updateSettings({ tickingSound: e.target.value as any })}
-                                    className="w-full bg-foreground/[0.03] border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                    className="w-full bg-background border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all cursor-pointer appearance-none"
                                 >
-                                    <option value="none">None</option>
-                                    <option value="slow">Ticking Slow</option>
-                                    <option value="fast">Ticking Fast</option>
+                                    <option value="none" className="bg-background text-foreground">None</option>
+                                    <option value="slow" className="bg-background text-foreground">Ticking Slow</option>
+                                    <option value="fast" className="bg-background text-foreground">Ticking Fast</option>
                                 </select>
                             </div>
 

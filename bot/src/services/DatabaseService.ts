@@ -164,4 +164,58 @@ export class DatabaseService {
             total_time: (acc.total_time || 0) + (curr.total_time || 0)
         }), { daily_time: 0, weekly_time: 0, monthly_time: 0, total_time: 0 });
     }
+
+    /**
+     * Persists the last status message ID for a channel
+     */
+    async setActiveMessage(channelId: string, guildId: string, messageId: string) {
+        if (!this.supabase || !process.env.SUPABASE_URL) return;
+
+        const { error } = await this.supabase
+            .from('active_channel_messages')
+            .upsert({
+                channel_id: channelId,
+                guild_id: guildId,
+                message_id: messageId,
+                updated_at: new Date()
+            });
+
+        if (error) {
+            console.error(`Error setting active message for ${channelId}:`, error);
+        }
+    }
+
+    /**
+     * Retrieves the last status message ID for a channel
+     */
+    async getActiveMessage(channelId: string) {
+        if (!this.supabase || !process.env.SUPABASE_URL) return null;
+
+        const { data, error } = await this.supabase
+            .from('active_channel_messages')
+            .select('message_id')
+            .eq('channel_id', channelId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            console.error(`Error fetching active message for ${channelId}:`, error);
+        }
+        return data?.message_id || null;
+    }
+
+    /**
+     * Deletes the active message record for a channel
+     */
+    async deleteActiveMessage(channelId: string) {
+        if (!this.supabase || !process.env.SUPABASE_URL) return;
+
+        const { error } = await this.supabase
+            .from('active_channel_messages')
+            .delete()
+            .eq('channel_id', channelId);
+
+        if (error) {
+            console.error(`Error deleting active message for ${channelId}:`, error);
+        }
+    }
 }

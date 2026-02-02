@@ -20,6 +20,7 @@ export interface TimerSettings {
         shortBreak: string;
         longBreak: string;
     };
+    darkModeWhenRunning: boolean;
 }
 
 const DEFAULT_SETTINGS: TimerSettings = {
@@ -38,6 +39,7 @@ const DEFAULT_SETTINGS: TimerSettings = {
         shortBreak: '#38858a',
         longBreak: '#397097',
     },
+    darkModeWhenRunning: false,
 };
 
 interface SettingsContextType {

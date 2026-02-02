@@ -78,32 +78,29 @@ export default function DocsPage() {
                                     <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Plus className="w-4 h-4 text-orange-500" />
                                     </div>
-                                    Installation
+                                    Installation & Setup
                                 </h2>
 
                                 <div className="grid sm:grid-cols-2 gap-6 text-foreground">
                                     <div className="p-8 rounded-[2rem] bg-muted/20 border border-border group hover:border-orange-500/30 transition-all">
-                                        <h3 className="font-bold text-xl mb-4">1. Invite the Bot</h3>
-                                        <p className="text-muted-foreground mb-6 text-sm leading-relaxed font-light">Click the button below to authorize Pomora on your server. No credit card required.</p>
+                                        <h3 className="font-bold text-xl mb-4 text-orange-500">1. Invite & Authorize</h3>
+                                        <p className="text-muted-foreground mb-6 text-sm leading-relaxed font-light">Add Pomora to your server with the required permissions to manage voice and messages.</p>
                                         <Link
                                             href="https://discord.com/api/oauth2/authorize?client_id=1467251658718445758&permissions=8&scope=bot%20applications.commands"
                                             target="_blank"
                                         >
-                                            <button className="w-full py-4 bg-orange-500 text-white rounded-xl font-black uppercase tracking-wider text-[10px] shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                                            <button className="w-full py-4 bg-orange-500 text-white rounded-xl font-black uppercase tracking-wider text-[10px] shadow-lg shadow-orange-500/20 active:scale-95 transition-all outline-none">
                                                 Add to Discord
                                             </button>
                                         </Link>
                                     </div>
-                                    <div className="p-8 rounded-[2rem] bg-muted/20 border border-border group hover:border-orange-500/30 transition-all">
-                                        <h3 className="font-bold text-xl mb-4">2. Check Permissions</h3>
-                                        <p className="text-muted-foreground mb-4 text-sm leading-relaxed font-light">Ensure Pomora has the following permissions in your study channels:</p>
-                                        <ul className="space-y-2">
-                                            {['View Channel', 'Connect', 'Speak', 'Embed Links'].map((p) => (
-                                                <li key={p} className="flex items-center gap-2 text-xs font-bold text-foreground/70">
-                                                    <Check className="w-4 h-4 text-emerald-500" /> {p}
-                                                </li>
-                                            ))}
-                                        </ul>
+                                    <div className="p-8 rounded-[2rem] bg-orange-500/5 border border-orange-500/20 group hover:border-orange-500 transition-all">
+                                        <h3 className="font-bold text-xl mb-4 text-orange-500">2. Mandatory Configuration</h3>
+                                        <p className="text-muted-foreground mb-4 text-sm leading-relaxed font-light">Pomora requires explicit designation of your study room to begin tracking sessions:</p>
+                                        <div className="bg-zinc-950 p-3 rounded-lg font-mono text-xs text-orange-500 mb-4 border border-white/5">
+                                            !setup vc #StudyRoom
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground/60 italic font-medium tracking-tight uppercase">NOTE: Tracking will not start until this is set.</p>
                                     </div>
                                 </div>
                             </div>
@@ -116,24 +113,23 @@ export default function DocsPage() {
                                     <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Clock className="w-4 h-4 text-orange-500" />
                                     </div>
-                                    Zero-Command Automation
+                                    The Pomora Cycle
                                 </h2>
                                 <p className="text-muted-foreground text-lg max-w-2xl font-light leading-relaxed">
-                                    Unlike other bots that require a prefix to start, Pomora is entirely event-driven.
-                                    Here is how the magic happens:
+                                    Once configured, Pomora operates with zero daily maintenance.
                                 </p>
 
                                 <div className="space-y-12 pt-4">
                                     {[
-                                        { step: '01', title: 'Activation Trigger', desc: 'When the first person joins a configured Voice Channel, Pomora automatically joins and initiates the focus timer.' },
-                                        { step: '02', title: 'Smart Intervals', desc: 'The bot cycles through 25m Focus and 5m Break periods. It plays a subtle chime and announces the transition via voice.' },
-                                        { step: '03', title: 'Visual Evidence', desc: 'Every minute, the bot updates a beautiful "Status Card" in the corresponding text channel so the whole community can see development.' },
-                                        { step: '04', title: 'Session End', desc: 'Once the VC is empty for more than 5 minutes, Pomora gracefully leaves and saves the session data for the daily report.' },
+                                        { step: '01', title: 'Seamless Activation', desc: 'When the first student joins the configured channel, Pomora starts the focus timer immediately.' },
+                                        { step: '02', title: 'Focus & Break Transitions', desc: 'Cycles through 50m Focus and 10m Break (default). Plays high-fidelity chimes and voice alerts during transitions.' },
+                                        { step: '03', title: 'Session Persistence', desc: 'The timer continues until the current Focus or Break period ends, even if everyone leaves the room momentarily.' },
+                                        { step: '04', title: 'Smart Cleanup', desc: 'If the room remains empty after a stage completes, the bot gracefully resets and waits for the next session.' },
                                     ].map((s) => (
                                         <div key={s.step} className="flex gap-8 group">
                                             <div className="text-5xl font-black text-foreground/5 group-hover:text-orange-500/20 transition-colors duration-500 leading-none shrink-0">{s.step}</div>
                                             <div>
-                                                <h3 className="text-xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300">{s.title}</h3>
+                                                <h3 className="text-xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300 tracking-tight">{s.title}</h3>
                                                 <p className="text-muted-foreground leading-relaxed font-light text-sm">{s.desc}</p>
                                             </div>
                                         </div>
@@ -149,43 +145,26 @@ export default function DocsPage() {
                                     <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Settings className="w-4 h-4 text-orange-500" />
                                     </div>
-                                    The `!setup` Command
+                                    Server Management
                                 </h2>
-                                <p className="text-muted-foreground mb-8 text-lg font-light leading-relaxed">
-                                    Configure Pomora for your specific server needs. Use the command below to open the interactive setup menu.
-                                </p>
 
                                 <div className="grid gap-12">
-                                    <div className="p-8 rounded-[3rem] bg-orange-500/5 border border-orange-500/20 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 group-hover:scale-110 transition-all">
-                                            <Settings className="w-32 h-32" />
-                                        </div>
+                                    <div className="p-8 rounded-[3rem] bg-muted/10 border border-border group">
                                         <div className="relative z-10 space-y-8">
                                             <div>
-                                                <h3 className="text-2xl font-black mb-4 flex items-center gap-2 italic tracking-tighter">
-                                                    <Terminal className="w-6 h-6 text-orange-500" />
-                                                    Configuration Menu
+                                                <h3 className="text-2xl font-black mb-4 flex items-center gap-2 italic tracking-tighter text-orange-500">
+                                                    <Terminal className="w-6 h-6" />
+                                                    Admin Quick Configuration
                                                 </h3>
-                                                <p className="text-muted-foreground mb-6 font-light text-sm max-w-lg leading-relaxed">
-                                                    Open a private admin-only view to configure report channels and voice channel monitoring without cluttering your chat.
-                                                </p>
-                                                <CodeBlock code="!setup" />
-                                            </div>
-
-                                            <div className="grid sm:grid-cols-2 gap-8 pt-8 border-t border-orange-500/10">
-                                                <div className="space-y-2">
-                                                    <h4 className="font-bold flex items-center gap-2 text-sm tracking-tight">
-                                                        <Hash className="w-4 h-4 text-orange-500" />
-                                                        Report Channel
-                                                    </h4>
-                                                    <p className="text-xs text-muted-foreground font-light leading-normal">Select where Pomora posts daily, weekly, and monthly productivity PDFs and images.</p>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <h4 className="font-bold flex items-center gap-2 text-sm tracking-tight">
-                                                        <Clock className="w-4 h-4 text-orange-500" />
-                                                        Custom Intervals
-                                                    </h4>
-                                                    <p className="text-xs text-muted-foreground font-light leading-normal">Set default focus/break lengths for the entire server (e.g. 50/10 or 25/5).</p>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Setup Voice Channel</p>
+                                                        <CodeBlock code="!setup vc #channel" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Setup Reports Channel</p>
+                                                        <CodeBlock code="!setup reports #channel" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -201,7 +180,7 @@ export default function DocsPage() {
                                     <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Hash className="w-4 h-4 text-orange-500" />
                                     </div>
-                                    Complete Commands
+                                    Command Reference
                                 </h2>
 
                                 <div className="rounded-[2.5rem] border border-border overflow-hidden bg-muted/10">
@@ -216,11 +195,11 @@ export default function DocsPage() {
                                             </thead>
                                             <tbody className="divide-y divide-border">
                                                 {[
-                                                    { cmd: '!leaderboard', desc: 'Shows the top 10 most productive students of the week.', role: 'Public' },
-                                                    { cmd: '!status', desc: 'Re-posts the current room status card manually.', role: 'Public' },
-                                                    { cmd: '!me', desc: 'View your personal focus statistics and global rank.', role: 'Public' },
-                                                    { cmd: '!setup', desc: 'Initialize server configuration and monitoring.', role: 'Admin' },
-                                                    { cmd: '!test-report', desc: 'Generate a mock daily report to verify channels.', role: 'Admin' },
+                                                    { cmd: '!lb [daily/weekly]', desc: 'Shows real-time server study rankings.', role: 'Public' },
+                                                    { cmd: '!status', desc: 'Sync the active status card in the voice channel.', role: 'Public' },
+                                                    { cmd: '!me', desc: 'Personal study stats and global achievement levels.', role: 'Public' },
+                                                    { cmd: '!setup', desc: 'View current server configuration overview.', role: 'Admin' },
+                                                    { cmd: '!setup vc/reports', desc: 'Explicitly configure voice or reporting channels.', role: 'Admin' },
                                                 ].map((row) => (
                                                     <tr key={row.cmd} className="hover:bg-orange-500/[0.02] transition-colors group">
                                                         <td className="px-8 py-6 font-black text-orange-500 font-mono tracking-tighter whitespace-nowrap">{row.cmd}</td>
@@ -249,13 +228,13 @@ export default function DocsPage() {
                                     <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Info className="w-4 h-4 text-orange-500" />
                                     </div>
-                                    FAQ
+                                    Common Questions
                                 </h2>
                                 <div className="grid gap-6">
                                     {[
-                                        { q: "Is Pomora really free?", a: "The core bot is completely free. We offer a Premium tier for servers that want custom status card branding and advanced CSV session exports." },
-                                        { q: "How many Study Rooms can it monitor?", a: "By default, Pomora monitors up to 5 voice channels per server. You can configure which specific channels it watches via !setup." },
-                                        { q: "Can I use my own sounds?", a: "Not yet! We have a curated list of high-fidelity focus chimes, but custom user sounds are coming in the Q1 2026 update." },
+                                        { q: "Why isn't the bot working in my VC?", a: "Ensure you have used !setup vc #RoomName. Pomora strictly monitors explicitly configured channels for precision tracking." },
+                                        { q: "Do members keep their time if they disconnect?", a: "Yes. Pomora logs session data every time a stage (Focus/Break) completes, ensuring no hard-earned study minutes are lost." },
+                                        { q: "How are reports generated?", a: "Reports are generated automatically based on real-time activity logged in your server's database. No mock or placeholder data is ever shown." },
                                     ].map((item, i) => (
                                         <div key={i} className="p-8 rounded-[2rem] border border-border bg-muted/10 hover:border-orange-500/30 transition-all group">
                                             <h4 className="font-black text-xl mb-4 group-hover:text-orange-500 transition-colors leading-tight tracking-tight">{item.q}</h4>

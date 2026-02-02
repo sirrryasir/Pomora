@@ -1,19 +1,41 @@
 'use client';
 
 import { PremiumTimer } from '@/components/PremiumTimer';
-import { Notes } from '@/components/Notes';
+import { Tasks } from '@/components/Tasks';
 import { SettingsModal } from '@/components/SettingsModal';
 import { UserNav } from '@/components/UserNav';
 import { BotNavbar } from '@/components/bot/BotNavbar';
 import { BotFooter } from '@/components/bot/BotFooter';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettings } from '@/components/SettingsContext';
+import { useTheme } from 'next-themes';
+import { useTasks } from '@/hooks/useTasks';
 
 export function HomeContent() {
     const { settings } = useSettings();
+    const { resolvedTheme } = useTheme();
     const [mode, setMode] = useState<'focus' | 'short_break' | 'long_break'>('focus');
+    const [isRunning, setIsRunning] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    // Initialize Task Hook
+    const tasksHook = useTasks();
+    const { incrementActiveTask } = tasksHook;
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const getBgColor = () => {
+        // Prevent hydration mismatch: SSR always gets the default theme color
+        if (!mounted) return settings.themeColors?.focus || '#ba4949';
+
+        // ONLY WHEN FOCUS TIME RUNNING AND THE TOGGLE ON
+        if (settings.darkModeWhenRunning && isRunning && mode === 'focus') {
+            return '#09090b';
+        }
+
+        // Custom themes from settings (Isolate from global light/dark mode)
         if (!settings.themeColors) return '#ba4949';
         switch (mode) {
             case 'focus': return settings.themeColors.focus;
@@ -48,12 +70,16 @@ export function HomeContent() {
                 <div className="w-full max-w-2xl px-4 flex flex-col gap-8 md:gap-16">
                     {/* Timer Section */}
                     <div className="w-full flex justify-center">
-                        <PremiumTimer onTypeChange={setMode} />
+                        <PremiumTimer
+                            onTypeChange={setMode}
+                            onRunningChange={setIsRunning}
+                            onFocusComplete={incrementActiveTask}
+                        />
                     </div>
 
-                    {/* Notes Section - Matches the theme background */}
+                    {/* Tasks Section - Matches the theme background */}
                     <div className="w-full">
-                        <Notes themeColor={bgColor} />
+                        <Tasks tasksHook={tasksHook} />
                     </div>
                 </div>
             </main>

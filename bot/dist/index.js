@@ -30,18 +30,37 @@ export const leaderboardReporter = new LeaderboardReporter(client, dbService);
 client.once(Events.ClientReady, (c) => {
     console.log(`Bot Active: ${c.user.tag}`);
 });
+client.on('guildCreate', async (guild) => {
+    console.log(`Joined new guild: ${guild.name}`);
+    const channel = guild.systemChannel ||
+        guild.channels.cache.find(c => c.type === 0 && (c.name.includes('general') || c.name.includes('bot')));
+    if (channel) {
+        const embed = new EmbedBuilder()
+            .setColor('#FF6B35')
+            .setTitle('Welcome to Pomora Premium!')
+            .setThumbnail(client.user?.displayAvatarURL() || null)
+            .setDescription('Thank you for inviting me. I am here to help your community reach peak focus and productivity.')
+            .addFields({ name: 'Step 1: Voice Setup [REQUIRED]', value: 'Use `!setup vc #channel` to designate your study room. I will only track sessions in the configured channel.' }, { name: 'Step 2: Leaderboards', value: 'Designate a channel for daily & weekly reports with `!setup reports #channel`.' }, { name: 'Step 3: Participation', value: 'Once in a VC, press the **Present** button on my message to log your time!' }, { name: 'Commands', value: 'Type `!help` to see all available commands.' })
+            .setFooter({ text: 'Pomora Premium - Focus. Flow. Pomora.' });
+        await channel.send({ embeds: [embed] }).catch(() => { });
+    }
+});
 client.on('voiceStateUpdate', async (oldState, newState) => {
-    const studyChannelName = process.env.STUDY_CHANNEL_NAME || 'Study';
     const member = newState.member || oldState.member;
     if (!member || member.user.bot || member.id === client.user?.id)
         return;
+    const guildId = newState.guild.id || oldState.guild.id;
+    const config = await dbService.getGuildConfig(guildId);
+    const studyChannelId = config?.study_channel_id;
+    // Join Logic
     if (newState.channel && (!oldState.channel || oldState.channel.id !== newState.channel.id)) {
-        if (newState.channel.name.toLowerCase().includes(studyChannelName.toLowerCase())) {
+        if (studyChannelId && newState.channel.id === studyChannelId) {
             await voiceManager.handleUserJoin(newState);
         }
     }
+    // Leave Logic
     if (oldState.channel && (!newState.channel || oldState.channel.id !== newState.channel.id)) {
-        if (oldState.channel.name.toLowerCase().includes(studyChannelName.toLowerCase())) {
+        if (studyChannelId && oldState.channel.id === studyChannelId) {
             await voiceManager.handleUserLeave(oldState);
         }
     }
@@ -195,36 +214,62 @@ client.on('messageCreate', async (message) => {
             .setTitle(`${message.author.username}'s Study Stats`)
             .setThumbnail(message.author.displayAvatarURL())
             .addFields({ name: 'Today', value: `${dailyHours} hours`, inline: true }, { name: 'This Week', value: `${weekHours} hours`, inline: true }, { name: 'Total', value: `${totalHours} hours`, inline: true })
-            .setFooter({ text: 'Keep up the great work! 🦁' });
+            .setFooter({ text: 'Keep up the great work!' });
         await message.reply({ embeds: [embed] });
     }
     if (command === 'help') {
         const embed = new EmbedBuilder()
             .setColor('#FF6B35')
-            .setTitle('Pomora Bot Help 🦁')
-            .setDescription('Here are the available commands for Pomora:')
-            .addFields({ name: '!leaderboard [daily|weekly|monthly]', value: 'Show server study leaderboard' }, { name: '!status', value: 'Check your current active session status' }, { name: '!me', value: 'Check your personal study statistics' }, { name: '!setup', value: 'Configure server settings (Admins only)' }, { name: '!test-report', value: 'Manually trigger a leaderboard report' })
-            .setFooter({ text: 'Pomora - Focus. Flow. Pomora.' });
+            .setTitle('Pomora Bot Help')
+            .setDescription('Master your focus with these commands:')
+            .addFields({ name: 'Leaderboards', value: '`!lb [daily|weekly|monthly]` - Show server study rankings', inline: false }, { name: 'Status', value: '`!status` - Check your active session details', inline: true }, { name: 'Stats', value: '`!me` - See your personal study achievement', inline: true }, { name: 'Configuration', value: '`!setup` - Manage server-side settings (Admins)', inline: false }, { name: 'Testing', value: '`!test-report` - Manually trigger a report', inline: true })
+            .setFooter({ text: 'Pomora Premium - Focus. Flow. Pomora.' });
         await message.reply({ embeds: [embed] });
     }
     if (command === 'setup' || command === 'config') {
         if (!message.member?.permissions.has('Administrator')) {
-            return message.reply("Only Administrators can configure the bot.");
+            return message.reply("Administrator permission required.");
         }
         const subCommand = args[0]?.toLowerCase();
         if (subCommand === 'report-channel' || subCommand === 'reports') {
-            const channel = message.mentions.channels.first() || message.channel;
-            await dbService.updateGuildConfig(message.guildId, { report_channel_id: channel.id });
-            return message.reply(`Report channel set to: ${channel}`);
+            const channelMention = args[1];
+            const channelId = channelMention?.replace(/[<#>]/g, '');
+            const channel = message.guild.channels.cache.get(channelId);
+            if (!channel || !channel.isTextBased()) {
+                return message.reply("Please mention a valid text channel. Example: `!setup reports #reports`.");
+            }
+            try {
+                await dbService.updateGuildConfig(message.guildId, { report_channel_id: channel.id });
+                return message.reply(`Report channel successfully set to <#${channel.id}>.`);
+            }
+            catch (err) {
+                return message.reply("Failed to update server configuration.");
+            }
+        }
+        if (subCommand === 'study-channel' || subCommand === 'vc') {
+            const channelMention = args[1];
+            const channelId = channelMention?.replace(/[<#>]/g, '');
+            const channel = message.guild.channels.cache.get(channelId);
+            if (!channel || !channel.isVoiceBased()) {
+                return message.reply("Please mention a valid voice channel. Example: `!setup vc #StudyRoom`.");
+            }
+            try {
+                await dbService.updateGuildConfig(message.guildId, { study_channel_id: channel.id });
+                return message.reply(`Study channel successfully set to <#${channel.id}>.`);
+            }
+            catch (err) {
+                return message.reply("Failed to update server configuration.");
+            }
         }
         const config = await dbService.getGuildConfig(message.guildId);
-        const reportChannelId = config?.report_channel_id || message.channelId;
+        const reportChannelId = config?.report_channel_id || 'Not Set';
+        const studyChannelId = config?.study_channel_id;
         const embed = new EmbedBuilder()
             .setColor('#FF6B35')
             .setTitle('Pomora Admin Configuration')
-            .setDescription('Manage your server settings below.')
-            .addFields({ name: 'Report Channel', value: `<#${reportChannelId}>` }, { name: 'Permissions', value: 'Administrator Only' }, { name: 'Commands', value: '`!setup report-channel <#channel>`' })
-            .setFooter({ text: 'Pomora Premium' });
+            .setDescription('Customize how Pomora operates in your server.')
+            .addFields({ name: 'Report Channel', value: reportChannelId !== 'Not Set' ? `<#${reportChannelId}>` : '`Not Set`', inline: true }, { name: 'Study Voice Channel', value: studyChannelId ? `<#${studyChannelId}>` : '`Not Set (Required for tracking)`', inline: true }, { name: 'Admin Commands', value: '`!setup reports <#channel>`\n`!setup vc <#voice-channel>`' })
+            .setFooter({ text: 'Pomora Premium - Focus. Flow. Pomora.' });
         await message.reply({ embeds: [embed] });
     }
 });
