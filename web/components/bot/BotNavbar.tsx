@@ -59,7 +59,7 @@ export function BotNavbar({
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                     <Link href="/" className="text-muted-foreground hover:text-orange-500 transition-colors">Home</Link>
-                    <Link href="/timer" className="text-muted-foreground hover:text-orange-500 transition-colors italic">imer</Link>
+                    <Link href="/timer" className="text-muted-foreground hover:text-orange-500 transition-colors italic">Timer</Link>
                     <Link href="/bot" className="text-muted-foreground hover:text-orange-500 transition-colors">Bot</Link>
                     <Link href="/bot/docs" className="text-muted-foreground hover:text-orange-500 transition-colors">Docs</Link>
                     <div className="h-4 w-px bg-border mx-1" />

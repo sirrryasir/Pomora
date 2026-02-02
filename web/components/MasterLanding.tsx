@@ -10,7 +10,7 @@ import { Timer, MessageSquare, Zap, Clock, Shield, Trophy, ChevronRight, Rocket,
 export function MasterLanding() {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
-            <BotNavbar />
+            <BotNavbar suffix="" />
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 px-4 overflow-hidden">
