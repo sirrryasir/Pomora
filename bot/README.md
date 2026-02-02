@@ -1,7 +1,7 @@
-# PomoSom Bot
-**The heartbeat of the PomoSom ecosystem.**
+# Pomora Bot
+**The heartbeat of the Pomora ecosystem.**
 
-The PomoSom Discord bot manages voice channel productivity sessions, tracks user time, and generates visual reports.
+The Pomora Discord bot manages voice channel productivity sessions, tracks user time, and generates visual reports.
 
 ## Main Commands
 
@@ -33,4 +33,4 @@ bun run start
 Ensure `DISCORD_TOKEN`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` are set in `.env`.
 
 ---
-*PomoSom Bot • Premium Productivity*
+*Pomora Bot • Premium Productivity*

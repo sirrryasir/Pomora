@@ -1,7 +1,7 @@
 {
-  "name": "@pomosom/discord-bot",
+  "name": "@pomora/discord-bot",
   "version": "1.0.0",
-  "description": "PomoSom Discord Bot - Study With Me voice channel integration",
+  "description": "Pomora Discord Bot - Study With Me voice channel integration",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

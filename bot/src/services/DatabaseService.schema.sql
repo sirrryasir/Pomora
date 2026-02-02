@@ -1,4 +1,4 @@
--- PomoSom Database Schema (Supabase/PostgreSQL)
+-- Pomora Database Schema (Supabase/PostgreSQL)
 
 -- 1. Profiles (Combined Web & Discord Users)
 CREATE TABLE IF NOT EXISTS public.profiles (

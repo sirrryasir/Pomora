@@ -1,7 +1,8 @@
-# PomoSom
-**The Ultimate Discord Productivity OS**
+# Pomora
 
-PomoSom is a premium, high-performance productivity system built for Discord. It combines a real-time web-synced timer, visual leaderboard reports, and an intuitive user experience to help communities study and work together effectively.
+A premium study ecosystem featuring a high-end **Web Timer** and a feature-rich **Discord Bot**, designed to help you master your focus.
+
+> **Focus. Flow. Pomora.**
 
 ## MVP Features
 
@@ -39,8 +40,8 @@ PomoSom is a premium, high-performance productivity system built for Discord. It
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/pomosom.git
-   cd pomosom
+   git clone https://github.com/sirrryasir/pomora.git
+   cd pomora
    ```
 
 2. **Install dependencies**:
@@ -84,4 +85,4 @@ PomoSom is a premium, high-performance productivity system built for Discord. It
 - [Web Documentation](apps/web/README.md)
 
 ---
-*Built with dedication for the PomoSom community.*
+*Built with dedication for the Pomora community.*

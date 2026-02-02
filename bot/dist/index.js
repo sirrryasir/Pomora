@@ -1,10 +1,19 @@
 import { Client, GatewayIntentBits, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, Events } from 'discord.js';
 import { config } from 'dotenv';
+import http from 'node:http';
 import { VoiceManager } from './services/VoiceManager.js';
 import { TimerService } from './services/TimerService.js';
 import { DatabaseService } from './services/DatabaseService.js';
 import { LeaderboardReporter } from './services/LeaderboardReporter.js';
 config();
+// Simple health check server for Railway/Deployment
+const port = process.env.PORT || 8080;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Pomora Bot is running\n');
+}).listen(port, () => {
+    console.log(`Health check server listening on port ${port}`);
+});
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -164,10 +173,10 @@ client.on('messageCreate', async (message) => {
         const reportChannelId = config?.report_channel_id || message.channelId;
         const embed = new EmbedBuilder()
             .setColor('#FF6B35')
-            .setTitle('Pomosom Admin Configuration')
+            .setTitle('Pomora Admin Configuration')
             .setDescription('Manage your server settings below.')
             .addFields({ name: 'Report Channel', value: `<#${reportChannelId}>` }, { name: 'Permissions', value: 'Administrator Only' }, { name: 'Commands', value: '`!setup report-channel <#channel>`' })
-            .setFooter({ text: 'PomoSom Premium' });
+            .setFooter({ text: 'Pomora Premium' });
         await message.reply({ embeds: [embed] });
     }
 });

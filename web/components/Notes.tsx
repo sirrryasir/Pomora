@@ -1,176 +1,213 @@
-'use client';
-
-import { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Plus, Trash2, StickyNote, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash, Plus, StickyNote, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Note {
     id: string;
     content: string;
-    createdAt: string;
+    created_at: string;
 }
 
-export function Notes() {
+const GUEST_STORAGE_KEY = 'pomora_guest_notes';
+
+export function Notes({ themeColor = '#f97316' }: { themeColor?: string }) {
+    const { user, loading: authLoading } = useAuth();
     const [notes, setNotes] = useState<Note[]>([]);
     const [newNote, setNewNote] = useState('');
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
-    const [isGuest, setIsGuest] = useState(true); // Default to guest for now
-
-    const fetchNotes = useCallback(async () => {
-        setLoading(true);
-        try {
-            // Try fetching from API first
-            const res = await fetch('http://localhost:5000/api/notes');
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data)) {
-                    setNotes(data);
-                    setIsGuest(false);
-                    // Save to local as backup
-                    localStorage.setItem('pomosom_notes_backup', JSON.stringify(data));
-                    return;
-                }
-            }
-        } catch (error) {
-            console.warn('API unavailable, falling back to LocalStorage');
-        }
-
-        // Fallback to LocalStorage
-        const local = localStorage.getItem('pomosom_notes');
-        if (local) {
-            setNotes(JSON.parse(local));
-        }
-        setIsGuest(true);
-        setLoading(false);
-    }, []);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchNotes();
-    }, [fetchNotes]);
+        if (!authLoading) {
+            fetchNotes();
+        }
+    }, [user, authLoading]);
+
+    const fetchNotes = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            if (user) {
+                const resp = await fetch('/api/notes');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    setNotes(Array.isArray(data) ? data : []);
+                } else {
+                    const errData = await resp.json().catch(() => ({ error: 'Failed to fetch notes' }));
+                    setError(errData.error || 'Server error occurred');
+                }
+            } else {
+                // Guest mode - Local Storage
+                const saved = localStorage.getItem(GUEST_STORAGE_KEY);
+                if (saved) {
+                    setNotes(JSON.parse(saved));
+                } else {
+                    setNotes([]);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch notes:', err);
+            setError('Connection error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const addNote = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newNote.trim() || adding) return;
+        if (!newNote.trim()) return;
 
-        const tempId = Math.random().toString(36).substr(2, 9);
-        const tempNote: Note = {
-            id: tempId,
-            content: newNote,
-            createdAt: new Date().toISOString(),
-        };
+        setAdding(true);
+        try {
+            const tempId = crypto.randomUUID();
+            const noteContent = newNote.trim();
+            const newNoteObj: Note = {
+                id: tempId,
+                content: noteContent,
+                created_at: new Date().toISOString(),
+            };
 
-        if (isGuest) {
-            const updatedNotes = [tempNote, ...notes];
-            setNotes(updatedNotes);
-            localStorage.setItem('pomosom_notes', JSON.stringify(updatedNotes));
-            setNewNote('');
-        } else {
-            setAdding(true);
-            try {
-                const res = await fetch('http://localhost:5000/api/notes', {
+            if (user) {
+                const resp = await fetch('/api/notes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: newNote }),
+                    body: JSON.stringify({ content: noteContent }),
                 });
-                if (res.ok) {
-                    const savedNote = await res.json();
-                    setNotes([savedNote, ...notes]);
-                    setNewNote('');
+                if (resp.ok) {
+                    const savedNote = await resp.json();
+                    setNotes((prev) => [savedNote, ...prev]);
                 }
-            } catch (error) {
-                console.error('Failed to add note to API', error);
-            } finally {
-                setAdding(false);
+            } else {
+                // Guest mode
+                const updatedNotes = [newNoteObj, ...notes];
+                setNotes(updatedNotes);
+                localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(updatedNotes));
             }
+            setNewNote('');
+        } catch (error) {
+            console.error('Failed to add note:', error);
+        } finally {
+            setAdding(false);
         }
     };
 
     const deleteNote = async (id: string) => {
-        if (isGuest) {
-            const updatedNotes = notes.filter((n) => n.id !== id);
-            setNotes(updatedNotes);
-            localStorage.setItem('pomosom_notes', JSON.stringify(updatedNotes));
-        } else {
-            try {
-                const res = await fetch(`http://localhost:5000/api/notes/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    setNotes(notes.filter((n) => n.id !== id));
+        try {
+            if (user) {
+                const resp = await fetch(`/api/notes/${id}`, {
+                    method: 'DELETE',
+                });
+                if (resp.ok) {
+                    setNotes((prev) => prev.filter((n) => n.id !== id));
                 }
-            } catch (error) {
-                console.error('Failed to delete note from API', error);
+            } else {
+                // Guest mode
+                const updatedNotes = notes.filter((n) => n.id !== id);
+                setNotes(updatedNotes);
+                localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(updatedNotes));
             }
+        } catch (error) {
+            console.error('Failed to delete note:', error);
         }
     };
 
+    if (authLoading) {
+        return (
+            <Card className="w-full max-w-xl mx-auto bg-white/10 backdrop-blur-2xl border-white/10 p-8 md:p-10 shadow-2xl rounded-[2.5rem] flex items-center justify-center min-h-[300px]">
+                <Loader2 className="w-8 h-8 animate-spin text-white/20" />
+            </Card>
+        );
+    }
+
     return (
-        <Card className="w-full max-w-md mx-auto bg-card/40 backdrop-blur-3xl border-border/50 p-8 shadow-2xl rounded-[2rem] transition-all duration-500">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-foreground/5 rounded-xl">
-                        <StickyNote className="w-5 h-5 text-orange-500" />
+        <Card className="w-[calc(100%-2rem)] md:w-full max-w-xl mx-auto bg-white/10 backdrop-blur-2xl border-white/10 p-6 md:p-10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] transition-all duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/10 rounded-2xl shrink-0">
+                        <StickyNote className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight text-foreground">Deep Focus</h2>
-                        <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-bold">Session Notes</p>
+                        <h3 className="text-lg md:text-xl font-black text-white tracking-tight">Focus Notes</h3>
+                        <p className="text-white/40 text-[9px] md:text-[10px] uppercase tracking-widest font-bold">Capture your flow</p>
                     </div>
                 </div>
-                {isGuest && (
-                    <div className="px-2 py-1 rounded bg-orange-500/10 border border-orange-500/20 text-[8px] uppercase font-black text-orange-500">
+                {!user && (
+                    <div className="self-start sm:self-auto px-3 py-1 rounded-full border text-[9px] md:text-[10px] uppercase font-black bg-white/5 border-white/20 text-white/60">
                         Guest Mode
                     </div>
                 )}
             </div>
 
-            <form onSubmit={addNote} className="flex gap-3 mb-8">
+            {error && (
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between gap-4">
+                    <p className="text-xs text-red-400 font-medium">{error}</p>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-3 text-[10px] uppercase font-black hover:bg-red-500/10 text-red-400"
+                        onClick={fetchNotes}
+                    >
+                        Retry
+                    </Button>
+                </div>
+            )}
+
+            <form onSubmit={addNote} className="flex gap-2 md:gap-3 mb-8 md:mb-10">
                 <Input
+                    placeholder="What are you working on?"
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Capture a thought..."
-                    className="bg-foreground/[0.03] border-border text-foreground rounded-xl placeholder:text-foreground/20 focus-visible:ring-orange-500/50"
+                    className="h-12 md:h-14 bg-white/5 border-white/10 text-white rounded-xl md:rounded-2xl placeholder:text-white/20 focus-visible:ring-0 focus-visible:border-white/30 transition-all text-sm px-4 md:px-6"
                 />
                 <Button
                     type="submit"
                     size="icon"
                     disabled={adding}
-                    className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-lg transition-transform active:scale-90 shrink-0"
+                    className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-90 shrink-0 border-none bg-white text-black hover:bg-zinc-100"
                 >
-                    {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
+                    {adding ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Plus className="w-5 h-5 md:w-6 md:h-6" />}
                 </Button>
             </form>
 
-            <ScrollArea className="h-[320px] pr-4">
-                {loading && notes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 opacity-20 text-foreground">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        <span className="text-[10px] uppercase font-bold tracking-widest">Syncing</span>
-                    </div>
-                ) : notes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-20 text-foreground">
-                        <StickyNote className="w-10 h-10 mb-2" />
-                        <p className="text-xs italic">Your mind is clear.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {notes.map((note) => (
+            <ScrollArea className="h-[300px] md:h-[350px] pr-2 md:pr-4">
+                <div className="space-y-3 md:space-y-4">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3">
+                            <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin text-white/20" />
+                            <p className="text-white/20 text-[9px] md:text-[10px] uppercase tracking-widest font-black">Loading your thoughts...</p>
+                        </div>
+                    ) : notes.length === 0 ? (
+                        <div className="text-center py-12 md:py-16 opacity-20 flex flex-col items-center gap-4">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.25rem] md:rounded-3xl bg-white/10 flex items-center justify-center">
+                                <StickyNote className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                            </div>
+                            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white">Your mind is clear.</p>
+                        </div>
+                    ) : (
+                        notes.map((note) => (
                             <div
                                 key={note.id}
-                                className="group flex justify-between items-start gap-4 p-4 rounded-2xl bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all border border-transparent hover:border-border/50"
+                                className="group flex items-start justify-between p-4 md:p-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl md:rounded-2xl transition-all duration-300"
                             >
-                                <p className="text-sm text-foreground/70 break-words leading-relaxed flex-1">{note.content}</p>
-                                <button
+                                <p className="text-xs md:text-sm leading-relaxed text-white/80 pr-4">{note.content}</p>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 md:h-8 md:w-8 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
                                     onClick={() => deleteNote(note.id)}
-                                    className="text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"
                                 >
-                                    <Trash className="w-4 h-4" />
-                                </button>
+                                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                </Button>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
             </ScrollArea>
         </Card>
     );

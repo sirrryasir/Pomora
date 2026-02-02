@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "PomoSom - Premium Pomodoro Timer for Deep Focus",
-    template: "%s | PomoSom"
+    default: "Pomora - Premium Pomodoro Timer for Deep Focus",
+    template: "%s | Pomora"
   },
-  description: "PomoSom is a beautiful, distraction-free Pomodoro timer designed to help you achieve deep focus and maximize productivity. Track your sessions, take smart breaks, and build better work habits.",
+  description: "Pomora is a beautiful, distraction-free Pomodoro timer designed to help you achieve deep focus and maximize productivity. Track your sessions, take smart breaks, and build better work habits.",
   keywords: [
     "pomodoro timer",
     "focus timer",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     "work timer",
     "study timer",
     "concentration tool",
-    "pomosom",
+    "pomora",
     "pomodoro technique"
   ],
   authors: [{ name: "Yasir" }],
@@ -40,15 +40,15 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://pomosom.yaasir.dev'),
+  metadataBase: new URL('https://pomora.yaasir.dev'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "PomoSom - Premium Pomodoro Timer for Deep Focus",
+    title: "Pomora - Premium Pomodoro Timer for Deep Focus",
     description: "Beautiful, distraction-free Pomodoro timer to help you achieve deep focus and maximize productivity.",
-    url: 'https://pomosom.yaasir.dev',
-    siteName: 'PomoSom',
+    url: 'https://pomora.yaasir.dev',
+    siteName: 'Pomora',
     locale: 'en_US',
     type: 'website',
     images: [
@@ -56,16 +56,16 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'PomoSom - Premium Pomodoro Timer',
+        alt: 'Pomora - Premium Pomodoro Timer',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "PomoSom - Premium Pomodoro Timer for Deep Focus",
+    title: "Pomora - Premium Pomodoro Timer for Deep Focus",
     description: "Beautiful, distraction-free Pomodoro timer to help you achieve deep focus and maximize productivity.",
     images: ['/og-image.png'],
-    creator: '@pomosom',
+    creator: '@pomora',
   },
   robots: {
     index: true,
@@ -88,6 +88,7 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { SettingsProvider } from "@/components/SettingsContext";
 
 export default function RootLayout({
   children,
@@ -99,14 +100,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-500`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <SettingsProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

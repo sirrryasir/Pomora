@@ -44,7 +44,7 @@ export class ImageService {
         ctx.font = 'bold 65px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.accent;
         ctx.textAlign = 'center';
-        ctx.fillText('POMOSOM CHAMPIONS', width / 2, 100);
+        ctx.fillText('POMORA CHAMPIONS', width / 2, 100);
 
         ctx.font = 'bold 22px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
@@ -156,12 +156,12 @@ export class ImageService {
         ctx.textAlign = 'center';
         ctx.font = '20px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
-        ctx.fillText(`Data updated hourly • Powered by PomoSom`, width / 2, height - 30);
+        ctx.fillText(`Data updated hourly • Powered by Pomora`, width / 2, height - 30);
 
         return canvas.toBuffer('image/png');
     }
 
-    async generateStatusCard(session: RoomSession, client: any, channelName: string = 'PomoSom Room'): Promise<Buffer> {
+    async generateStatusCard(session: RoomSession, client: any, channelName: string = 'Pomora Room'): Promise<Buffer> {
         const width = 800;
         const height = 400;
         const canvas = createCanvas(width, height);

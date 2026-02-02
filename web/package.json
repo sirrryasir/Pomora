@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "@pomora/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "daisyui": "^5.5.14",
+    "framer-motion": "^12.29.2",
     "lucide-react": "^0.563.0",
     "next": "16.1.1",
     "next-themes": "^0.4.6",

@@ -126,7 +126,7 @@ export class VoiceManager {
         const content = `${stageline}${warningLine}`;
         let attachment = this.lastAttachments.get(channelId);
         if (updateImage || !attachment) {
-            let channelName = 'PomoSom Room';
+            let channelName = 'Pomora Room';
             try {
                 const channel = await this.client.channels.fetch(channelId);
                 if (channel && 'name' in channel && channel.name) {
@@ -141,7 +141,7 @@ export class VoiceManager {
         }
         const embed = new EmbedBuilder()
             .setColor(room.type === 'focus' ? '#FF6B35' : '#43B581')
-            .setTitle('PomoSom Study Session')
+            .setTitle('Pomora Study Session')
             .setImage(`attachment://${attachment.name}`)
             .setTimestamp();
         const row = new ActionRowBuilder()

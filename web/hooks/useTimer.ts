@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSettings, type TickingSound } from './useSettings';
+import { useSettings, type TickingSound } from '@/components/SettingsContext';
 
 export type SessionType = 'focus' | 'short_break' | 'long_break';
 
@@ -50,14 +50,14 @@ export const useTimer = () => {
         if (!isLoaded || isReady) return;
 
         const today = new Date().toLocaleDateString();
-        const savedStats = localStorage.getItem('pomosom_daily_stats');
+        const savedStats = localStorage.getItem('pomora_daily_stats');
         if (savedStats) {
             const stats = JSON.parse(savedStats);
             if (stats.date === today) setDailySessions(stats.count || 0);
-            else localStorage.setItem('pomosom_daily_stats', JSON.stringify({ date: today, count: 0 }));
+            else localStorage.setItem('pomora_daily_stats', JSON.stringify({ date: today, count: 0 }));
         }
 
-        const savedState = localStorage.getItem('pomosom_timer_state');
+        const savedState = localStorage.getItem('pomora_timer_state');
         if (savedState) {
             const state = JSON.parse(savedState);
             setType(state.type || 'focus');
@@ -90,7 +90,7 @@ export const useTimer = () => {
             isRunning,
             lastUpdated: Date.now()
         };
-        localStorage.setItem('pomosom_timer_state', JSON.stringify(state));
+        localStorage.setItem('pomora_timer_state', JSON.stringify(state));
     }, [remainingTime, type, round, isRunning, isLoaded, isReady]);
 
     // 3. Settings Sync (Manual changes only)
@@ -113,7 +113,7 @@ export const useTimer = () => {
         const today = new Date().toLocaleDateString();
         setDailySessions(prev => {
             const next = prev + 1;
-            localStorage.setItem('pomosom_daily_stats', JSON.stringify({ date: today, count: next }));
+            localStorage.setItem('pomora_daily_stats', JSON.stringify({ date: today, count: next }));
             return next;
         });
     }, []);
@@ -153,7 +153,7 @@ export const useTimer = () => {
         audio.volume = settings.alarmVolume / 100;
         audio.play().catch(() => { });
         if (Notification.permission === 'granted') {
-            new Notification('PomoSom', { body: 'Session complete!', icon: '/favicon.ico' });
+            new Notification('Pomora', { body: 'Session complete!', icon: '/favicon.ico' });
         }
     }, [settings.alarmVolume]);
 

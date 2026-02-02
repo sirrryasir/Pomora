@@ -3,51 +3,64 @@
 import { PremiumTimer } from '@/components/PremiumTimer';
 import { Notes } from '@/components/Notes';
 import { SettingsModal } from '@/components/SettingsModal';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserNav } from '@/components/UserNav';
-import Link from 'next/link';
-import { Bot } from 'lucide-react';
+import { BotNavbar } from '@/components/bot/BotNavbar';
+import { BotFooter } from '@/components/bot/BotFooter';
+import { useState } from 'react';
+import { useSettings } from '@/components/SettingsContext';
 
 export function HomeContent() {
+    const { settings } = useSettings();
+    const [mode, setMode] = useState<'focus' | 'short_break' | 'long_break'>('focus');
+
+    const getBgColor = () => {
+        if (!settings.themeColors) return '#ba4949';
+        switch (mode) {
+            case 'focus': return settings.themeColors.focus;
+            case 'short_break': return settings.themeColors.shortBreak;
+            case 'long_break': return settings.themeColors.longBreak;
+            default: return settings.themeColors.focus;
+        }
+    };
+
+    const bgColor = getBgColor();
+
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col items-center transition-all duration-1000">
-            <header className="w-full max-w-2xl flex justify-between items-center py-6 px-4">
-                <div className="flex items-center gap-2">
-                    <img src="/images/logo.png" alt="PomoSom" className="w-10 h-10 object-contain" />
-                    <h1 className="text-xl font-black tracking-tighter">POMOSOM</h1>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Link
-                        href="/bot"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-foreground/5 hover:bg-orange-500/10 hover:text-orange-500 transition-all text-[10px] font-bold uppercase tracking-widest"
-                    >
-                        <Bot className="w-3.5 h-3.5" />
-                        <span>Bot</span>
-                    </Link>
-                    <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl backdrop-blur-md">
-                        <ThemeToggle />
-                        <SettingsModal />
-                        <UserNav />
+        <div className="min-h-screen bg-background text-foreground flex flex-col transition-all duration-1000">
+            {/* Global Navbar - Neutral Light/Dark */}
+            <div className="w-full sticky top-0 z-50">
+                <BotNavbar
+                    suffix="Timer"
+                    extra={
+                        <div className="flex items-center gap-1 bg-foreground/[0.05] p-1 rounded-xl backdrop-blur-md border border-border/50">
+                            <SettingsModal />
+                            <UserNav />
+                        </div>
+                    }
+                />
+            </div>
+
+            {/* Themed Content Section - Primary Product Experience */}
+            <main
+                className="flex-1 w-full transition-all duration-1000 ease-in-out py-12 md:py-20 flex flex-col gap-12 items-center"
+                style={{ backgroundColor: bgColor }}
+            >
+                <div className="w-full max-w-2xl px-4 flex flex-col gap-8 md:gap-16">
+                    {/* Timer Section */}
+                    <div className="w-full flex justify-center">
+                        <PremiumTimer onTypeChange={setMode} />
                     </div>
-                </div>
-            </header>
 
-            <main className="w-full max-w-2xl flex flex-col items-center px-4 py-8 gap-8">
-                {/* Timer Section */}
-                <div className="w-full flex flex-col items-center">
-                    <PremiumTimer />
-                </div>
-
-                {/* Notes Section */}
-                <div className="w-full max-w-xl">
-                    <Notes />
+                    {/* Notes Section - Matches the theme background */}
+                    <div className="w-full">
+                        <Notes themeColor={bgColor} />
+                    </div>
                 </div>
             </main>
 
-            {/* Background Ambience */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/5 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 blur-[120px] rounded-full" />
+            {/* Global Footer - Neutral Light/Dark */}
+            <div className="w-full border-t border-border/10 bg-background">
+                <BotFooter />
             </div>
         </div>
     );

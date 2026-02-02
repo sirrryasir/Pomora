@@ -12,7 +12,7 @@ config();
 const port = process.env.PORT || 8080;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('PomoSom Bot is running\n');
+    res.end('Pomora Bot is running\n');
 }).listen(port, () => {
     console.log(`Health check server listening on port ${port}`);
 });
@@ -207,14 +207,14 @@ client.on('messageCreate', async (message) => {
 
         const embed = new EmbedBuilder()
             .setColor('#FF6B35')
-            .setTitle('Pomosom Admin Configuration')
+            .setTitle('Pomora Admin Configuration')
             .setDescription('Manage your server settings below.')
             .addFields(
                 { name: 'Report Channel', value: `<#${reportChannelId}>` },
                 { name: 'Permissions', value: 'Administrator Only' },
                 { name: 'Commands', value: '`!setup report-channel <#channel>`' }
             )
-            .setFooter({ text: 'PomoSom Premium' });
+            .setFooter({ text: 'Pomora Premium' });
 
         await message.reply({ embeds: [embed] });
     }
