@@ -68,13 +68,12 @@ export class LeaderboardReporter {
             if (!channel) return;
 
             if (leaderboard.length === 0) {
+                console.log(`[LeaderboardReporter] No data found for guild ${guildId} (${timeframe})`);
                 if (isManual) {
                     await targetChannel.send("No study data available for this timeframe yet.");
                 }
                 return;
             }
-
-            if (leaderboard.length === 0) return;
 
             const imageBuffer = await this.imageService.generateLeaderboardCard(
                 guild.name,

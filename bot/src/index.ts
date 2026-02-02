@@ -321,7 +321,17 @@ client.on('messageCreate', async (message) => {
 
             try {
                 await dbService.updateGuildConfig(message.guildId!, { study_channel_id: channel.id });
-                return message.reply(`Study channel successfully set to <#${channel.id}>.`);
+
+                // Immediately check if anyone is already in the channel
+                if (channel.members.size > 0) {
+                    for (const [_, member] of channel.members) {
+                        if (!member.user.bot) {
+                            await voiceManager.handleUserJoin(member.voice);
+                        }
+                    }
+                }
+
+                return message.reply(`Study channel successfully set to <#${channel.id}>. Tracking is now active.`);
             } catch (err) {
                 return message.reply("Failed to update server configuration.");
             }

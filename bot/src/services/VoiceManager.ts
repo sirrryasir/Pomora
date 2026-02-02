@@ -71,6 +71,11 @@ export class VoiceManager {
 
         this.timerService.joinRoom(userId, guildId, channelId);
 
+        // Ensure bot is in VC for visual presence
+        if (!this.connections.has(guildId)) {
+            await this.joinChannel(channelId, guildId);
+        }
+
         // Always force a new status message on join for instant feedback
         await this.updateStatusMessage(guildId, channelId, true, true);
     }
@@ -122,6 +127,7 @@ export class VoiceManager {
                 await this.dbService.deleteActiveMessage(room.channelId);
             }
             this.timerService.stopRoomCleanup(room.channelId);
+            this.leaveChannel(room.guildId);
             return;
         }
 
@@ -277,25 +283,45 @@ export class VoiceManager {
 
     private async joinChannel(channelId: string, guildId: string): Promise<VoiceConnection | null> {
         const channel = await this.client.channels.fetch(channelId);
-        if (!channel || !channel.isVoiceBased()) return null;
-
-        const existing = getVoiceConnection(guildId);
-        if (existing) {
-            existing.destroy();
-            this.connections.delete(guildId);
+    public async joinChannel(channelId: string, guildId: string) {
+        console.log(`[VoiceManager] Attempting to join channel ${channelId} in guild ${guildId}`);
+        const guild = this.client.guilds.cache.get(guildId);
+        if (!guild) {
+            console.error(`[VoiceManager] Guild ${guildId} not found in cache`);
+            return;
         }
 
-        const voiceChannel = channel as VoiceChannel;
-        const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            selfDeaf: false,
-            selfMute: false,
-        });
+        try {
+            const connection = joinVoiceChannel({
+                channelId: channelId,
+                guildId: guildId,
+                adapterCreator: guild.voiceAdapterCreator,
+                selfDeaf: false,
+            });
 
-        this.connections.set(guildId, connection);
-        return connection;
+            this.connections.set(guildId, connection);
+            console.log(`[VoiceManager] Connection state created for guild ${guildId}`);
+
+            connection.on(VoiceConnectionStatus.Disconnected, async () => {
+                try {
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 5000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 5000),
+                    ]);
+                } catch (error) {
+                    console.log(`[VoiceManager] Connection disconnected and failed to reconnect: ${error}`);
+                    connection.destroy();
+                    this.connections.delete(guildId);
+                }
+            });
+
+            connection.on('error', (error) => {
+                console.error(`[VoiceManager] Connection error in guild ${guildId}:`, error);
+            });
+
+        } catch (error) {
+            console.error(`[VoiceManager] Failed to join channel ${channelId}:`, error);
+        }
     }
 
     private leaveChannel(guildId: string) {
@@ -360,8 +386,7 @@ export class VoiceManager {
             });
         } catch (error) {
             console.error('Voice playback error:', error);
-        } finally {
-            this.leaveChannel(guildId);
         }
+        // Connection remains alive until stopRoomCleanup is called
     }
 }
