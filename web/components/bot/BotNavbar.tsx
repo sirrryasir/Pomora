@@ -59,14 +59,14 @@ export function BotNavbar({
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                     <Link href="/" className="text-muted-foreground hover:text-orange-500 transition-colors">Home</Link>
-                    <Link href="/timer" className="text-muted-foreground hover:text-orange-500 transition-colors italic">Timer</Link>
+                    <Link href="/timer" className="text-muted-foreground hover:text-orange-500 transition-colors italic">imer</Link>
                     <Link href="/bot" className="text-muted-foreground hover:text-orange-500 transition-colors">Bot</Link>
                     <Link href="/bot/docs" className="text-muted-foreground hover:text-orange-500 transition-colors">Docs</Link>
                     <div className="h-4 w-px bg-border mx-1" />
 
                     {extra && <div className="flex items-center gap-2 mr-2">{extra}</div>}
 
-                    <a href="https://github.com/sirrryasir/Pomoro" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
+                    <a href="https://github.com/sirrryasir/Pomora" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
                         <Github className="w-5 h-5" />
                     </a>
                     <ThemeToggle />
