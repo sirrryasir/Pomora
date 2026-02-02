@@ -189,6 +189,75 @@ client.on('messageCreate', async (message) => {
         await leaderboardReporter.sendGuildReport(message.guildId!, timeframe, message.channel as TextChannel, message.author.id);
     }
 
+    if (command === 'leaderboard' || command === 'lb') {
+        const timeframe = (args[0] as any) || 'weekly';
+        if (!['daily', 'weekly', 'monthly'].includes(timeframe)) {
+            return message.reply('Usage: !leaderboard daily|weekly|monthly');
+        }
+        await message.reply(`Fetching ${timeframe} leaderboard...`);
+        await leaderboardReporter.sendGuildReport(message.guildId!, timeframe, message.channel as TextChannel, message.author.id);
+    }
+
+    if (command === 'status') {
+        const session = timerService.getUserSession(message.author.id);
+        if (!session) {
+            return message.reply("You are not in an active study session. Join a voice channel to start!");
+        }
+
+        const mins = Math.floor(session.remaining / 60);
+        const secs = session.remaining % 60;
+        const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        const embed = new EmbedBuilder()
+            .setColor(session.type === 'focus' ? '#FF6B35' : '#43B581')
+            .setTitle(`Current Session: ${session.type.toUpperCase()}`)
+            .setDescription(`**Time Remaining:** ${timeStr}\n**Participants:** ${session.participants.size}`)
+            .setTimestamp();
+
+        await message.reply({ embeds: [embed] });
+    }
+
+    if (command === 'me' || command === 'stats') {
+        const profile = await dbService.getUserProfile(message.author.id);
+        if (!profile) {
+            return message.reply("You haven't started studying yet! Join a voice channel to log your first session.");
+        }
+
+        const totalHours = (profile.total_time / 60).toFixed(1);
+        const weekHours = (profile.weekly_time / 60).toFixed(1);
+        const dailyHours = (profile.daily_time / 60).toFixed(1);
+
+        const embed = new EmbedBuilder()
+            .setColor('#FF6B35')
+            .setTitle(`${message.author.username}'s Study Stats`)
+            .setThumbnail(message.author.displayAvatarURL())
+            .addFields(
+                { name: 'Today', value: `${dailyHours} hours`, inline: true },
+                { name: 'This Week', value: `${weekHours} hours`, inline: true },
+                { name: 'Total', value: `${totalHours} hours`, inline: true }
+            )
+            .setFooter({ text: 'Keep up the great work! 🦁' });
+
+        await message.reply({ embeds: [embed] });
+    }
+
+    if (command === 'help') {
+        const embed = new EmbedBuilder()
+            .setColor('#FF6B35')
+            .setTitle('Pomora Bot Help 🦁')
+            .setDescription('Here are the available commands for Pomora:')
+            .addFields(
+                { name: '!leaderboard [daily|weekly|monthly]', value: 'Show server study leaderboard' },
+                { name: '!status', value: 'Check your current active session status' },
+                { name: '!me', value: 'Check your personal study statistics' },
+                { name: '!setup', value: 'Configure server settings (Admins only)' },
+                { name: '!test-report', value: 'Manually trigger a leaderboard report' }
+            )
+            .setFooter({ text: 'Pomora - Focus. Flow. Pomora.' });
+
+        await message.reply({ embeds: [embed] });
+    }
+
     if (command === 'setup' || command === 'config') {
         if (!message.member?.permissions.has('Administrator')) {
             return message.reply("Only Administrators can configure the bot.");

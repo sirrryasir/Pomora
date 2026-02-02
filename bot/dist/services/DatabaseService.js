@@ -125,4 +125,28 @@ export class DatabaseService {
             throw error;
         }
     }
+    /**
+     * Gets aggregated stats for a specific user across all guilds
+     */
+    async getUserProfile(userId) {
+        if (!this.supabase || !process.env.SUPABASE_URL)
+            return null;
+        const { data, error } = await this.supabase
+            .from('guild_stats')
+            .select('daily_time, weekly_time, monthly_time, total_time')
+            .eq('user_id', userId);
+        if (error) {
+            console.error(`Error fetching profile for ${userId}:`, error);
+            return null;
+        }
+        if (!data || data.length === 0)
+            return null;
+        // Aggregate stats
+        return data.reduce((acc, curr) => ({
+            daily_time: (acc.daily_time || 0) + (curr.daily_time || 0),
+            weekly_time: (acc.weekly_time || 0) + (curr.weekly_time || 0),
+            monthly_time: (acc.monthly_time || 0) + (curr.monthly_time || 0),
+            total_time: (acc.total_time || 0) + (curr.total_time || 0)
+        }), { daily_time: 0, weekly_time: 0, monthly_time: 0, total_time: 0 });
+    }
 }

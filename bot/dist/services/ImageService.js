@@ -32,13 +32,25 @@ export class ImageService {
         };
         ctx.fillStyle = colors.bg;
         ctx.fillRect(0, 0, width, height);
-        ctx.font = 'bold 65px CustomSans, Arial, sans-serif';
-        ctx.fillStyle = colors.accent;
+        ctx.font = 'bold 64px CustomSans, Arial, sans-serif';
+        ctx.fillStyle = '#FFD700'; // Gold
         ctx.textAlign = 'center';
-        ctx.fillText('POMORA CHAMPIONS', width / 2, 100);
+        ctx.fillText('Study Time Leaderboards', width / 2, 95);
+        ctx.font = 'bold 20px CustomSans, Arial, sans-serif';
+        ctx.fillStyle = colors.textMuted;
+        ctx.fillText(`server: ${guildName}`, width / 2, 135);
         ctx.font = 'bold 22px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
-        ctx.fillText(`TOP STUDY PERFORMANCE • ${timeframe.toUpperCase()}`, width / 2, 145);
+        ctx.fillText(`TOP STUDY PERFORMANCE • ${timeframe.toUpperCase()}`, width / 2, 165);
+        // Add logo to top-right corner
+        try {
+            const logoPath = path.resolve(__dirname, '../../assets/images/pomo_icon.png');
+            if (fs.existsSync(logoPath)) {
+                const logo = await loadImage(logoPath);
+                ctx.drawImage(logo, width - 80, 40, 40, 40);
+            }
+        }
+        catch (e) { }
         const podiumY = 320;
         const podiumConfigs = [
             { pos: 1, x: 500, size: 190, color: colors.gold, rank: '1ST' },
@@ -132,7 +144,7 @@ export class ImageService {
         ctx.textAlign = 'center';
         ctx.font = '20px CustomSans, Arial, sans-serif';
         ctx.fillStyle = colors.textMuted;
-        ctx.fillText(`Data updated hourly • Powered by Pomora`, width / 2, height - 30);
+        ctx.fillText(`Data updated hourly`, width / 2, height - 30);
         return canvas.toBuffer('image/png');
     }
     async generateStatusCard(session, client, channelName = 'Pomora Room') {
