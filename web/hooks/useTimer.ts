@@ -152,7 +152,7 @@ export const useTimer = (onFocusComplete?: () => void) => {
         audio.crossOrigin = 'anonymous';
         audio.volume = settings.alarmVolume / 100;
         audio.play().catch(() => { });
-        if (Notification.permission === 'granted') {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
             new Notification('Pomora', { body: 'Session complete!', icon: '/favicon.ico' });
         }
     }, [settings.alarmVolume]);
@@ -205,7 +205,7 @@ export const useTimer = (onFocusComplete?: () => void) => {
 
     // Notification Permission
     useEffect(() => {
-        if (typeof window !== 'undefined' && Notification.permission === 'default') {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
     }, []);
