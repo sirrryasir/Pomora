@@ -4,10 +4,11 @@ import { useSettings, type TickingSound } from '@/components/SettingsContext';
 export type SessionType = 'focus' | 'short_break' | 'long_break';
 
 // Sound URL mapping
-const TICKING_SOUNDS: Record<TickingSound, string | null> = {
+const TICKING_SOUNDS: Record<string, string | null> = {
     none: null,
     slow: '/sounds/ticking-slow.mp3',
     fast: '/sounds/ticking-fast.mp3',
+    // Custom handled dynamically
 };
 
 export const useTimer = (onFocusComplete?: () => void) => {
@@ -24,9 +25,24 @@ export const useTimer = (onFocusComplete?: () => void) => {
     const tickingAudioRef = useRef<HTMLAudioElement | null>(null);
 
     // Initialize ticking audio based on selected sound
+
+    // Helper to safely play audio
+    const playSafe = (audio: HTMLAudioElement) => {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+                // Silently swallow AbortError to prevent Runtime Error Overlay
+                if (error.name !== 'AbortError') {
+                    console.warn('Audio play warning:', error);
+                }
+            });
+        }
+    };
+
     useEffect(() => {
         if (typeof window !== 'undefined' && settings.tickingSound !== 'none') {
             const url = TICKING_SOUNDS[settings.tickingSound];
+
             if (url) {
                 // Clean up previous audio if exists
                 if (tickingAudioRef.current) {
@@ -34,15 +50,29 @@ export const useTimer = (onFocusComplete?: () => void) => {
                     tickingAudioRef.current = null;
                 }
 
-                tickingAudioRef.current = new Audio(url);
-                tickingAudioRef.current.preload = 'auto';
-                tickingAudioRef.current.crossOrigin = 'anonymous';
+                const audio = new Audio(url);
+                tickingAudioRef.current = audio;
+                audio.preload = 'auto';
+                audio.crossOrigin = 'anonymous';
+
+                // For ambient sounds (rain, cafe, etc.), loop them
+                if (['rain', 'cafe', 'forest'].includes(settings.tickingSound)) {
+                    audio.loop = true;
+                }
             }
         } else if (tickingAudioRef.current) {
-            // Clean up if sound is set to none
+            // Clean up if sound is set to none or switched to custom
             tickingAudioRef.current.pause();
             tickingAudioRef.current = null;
         }
+
+        // Cleanup on unmount or change
+        return () => {
+            if (tickingAudioRef.current) {
+                tickingAudioRef.current.pause();
+                tickingAudioRef.current = null;
+            }
+        };
     }, [settings.tickingSound]);
 
     // 1. Initial Load (Hardened)
@@ -145,26 +175,54 @@ export const useTimer = (onFocusComplete?: () => void) => {
         setIsRunning(false);
     }, [settings]);
 
-    // Audio
+    // Audio & Alarm
     const playAlarm = useCallback(() => {
         if (typeof window === 'undefined') return;
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audio.crossOrigin = 'anonymous';
         audio.volume = settings.alarmVolume / 100;
         audio.play().catch(() => { });
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+
+        if (Notification.permission === 'granted') {
             new Notification('Pomora', { body: 'Session complete!', icon: '/favicon.ico' });
         }
-    }, [settings.alarmVolume]);
+
+        // Celebration!
+        if (typeof window !== 'undefined') {
+            import('canvas-confetti').then((confetti) => {
+                const triggerConfetti = confetti.default || confetti; // Handle default export
+                // @ts-ignore
+                triggerConfetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#f97316', '#3b82f6', '#10b981'] // Theme colors
+                });
+            }).catch(e => console.error(e));
+        }
+
+        // Stats Sync for Logged-in Users
+        if (type === 'focus') {
+            fetch('/api/stats', {
+                method: 'PATCH',
+                body: JSON.stringify({ minutes: Math.floor(settings.focusTime) }),
+                headers: { 'Content-Type': 'application/json' }
+            }).catch(err => console.error('Failed to sync stats', err));
+        }
+    }, [settings.alarmVolume, type, settings.focusTime]);
 
     const playTick = useCallback(() => {
+        // Strict guard: ensure audio exists and sound is valid
         if (!tickingAudioRef.current || settings.tickingSound === 'none') return;
 
-        tickingAudioRef.current.volume = settings.tickingVolume / 100;
+        const audio = tickingAudioRef.current;
+        audio.volume = settings.tickingVolume / 100;
 
-        // For tick sounds, restart from beginning each second
-        tickingAudioRef.current.currentTime = 0;
-        tickingAudioRef.current.play().catch(() => { });
+
+
+        // Ticking sounds (rhythmic, once per second)
+        audio.currentTime = 0;
+        playSafe(audio);
     }, [settings.tickingVolume, settings.tickingSound]);
 
     useEffect(() => {
@@ -197,10 +255,21 @@ export const useTimer = (onFocusComplete?: () => void) => {
                     return prev - 1;
                 });
             }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
+        } else {
+            if (timerRef.current) clearInterval(timerRef.current);
+
+            // Explicitly pause any ticking audio when not running
+            if (tickingAudioRef.current) {
+                tickingAudioRef.current.pause();
+            }
         }
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+            // Safety cleanup
+            if (tickingAudioRef.current && ['rain', 'cafe', 'forest'].includes(settings.tickingSound)) {
+                tickingAudioRef.current.pause();
+            }
+        };
     }, [isRunning, remainingTime, type, round, settings, isReady, playAlarm, playTick, incrementDailySessions, onFocusComplete]);
 
     // Notification Permission

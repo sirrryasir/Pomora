@@ -11,9 +11,11 @@ export interface TimerSettings {
     autoStartBreaks: boolean;
     autoStartPomodoros: boolean;
     longBreakInterval: number;
+    dailyGoal: number;
     alarmSound: string;
     alarmVolume: number;
     tickingSound: TickingSound;
+
     tickingVolume: number;
     themeColors: {
         focus: string;
@@ -30,9 +32,11 @@ const DEFAULT_SETTINGS: TimerSettings = {
     autoStartBreaks: false,
     autoStartPomodoros: false,
     longBreakInterval: 4,
+    dailyGoal: 8,
     alarmSound: 'digital',
     alarmVolume: 50,
     tickingSound: 'none',
+
     tickingVolume: 50,
     themeColors: {
         focus: '#ba4949',

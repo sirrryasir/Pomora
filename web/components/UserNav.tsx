@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { ReportModal } from '@/components/ReportModal';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,14 +56,16 @@ export function UserNav() {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/50" />
-                <DropdownMenuItem className="flex items-center gap-2 p-2 focus:bg-orange-500/10 focus:text-orange-500 rounded-xl cursor-not-allowed opacity-50">
-                    <Trophy className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Rank: #1,204</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 p-2 focus:bg-foreground/5 rounded-xl cursor-not-allowed opacity-50">
-                    <User className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Profile</span>
-                </DropdownMenuItem>
+
+                <ReportModal>
+                    <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="flex items-center gap-2 p-2 focus:bg-orange-500/10 focus:text-orange-500 rounded-xl cursor-pointer"
+                    >
+                        <Trophy className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Report & Rank</span>
+                    </DropdownMenuItem>
+                </ReportModal>
                 <DropdownMenuSeparator className="bg-border/50" />
                 <DropdownMenuItem
                     onClick={() => signOut()}

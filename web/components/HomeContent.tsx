@@ -1,6 +1,7 @@
 'use client';
 
 import { PremiumTimer } from '@/components/PremiumTimer';
+import { StreakBadge } from '@/components/StreakBadge';
 import { Tasks } from '@/components/Tasks';
 import { SettingsModal } from '@/components/SettingsModal';
 import { UserNav } from '@/components/UserNav';
@@ -10,10 +11,14 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '@/components/SettingsContext';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/hooks/useTasks';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ReactPlayer to avoid SSR issues
+// const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 export function HomeContent() {
-    const { settings } = useSettings();
-    const { resolvedTheme } = useTheme();
+    const { settings, isLoaded } = useSettings();
+    const { theme } = useTheme();
     const [mode, setMode] = useState<'focus' | 'short_break' | 'long_break'>('focus');
     const [isRunning, setIsRunning] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -21,6 +26,8 @@ export function HomeContent() {
     // Initialize Task Hook
     const tasksHook = useTasks();
     const { incrementActiveTask } = tasksHook;
+
+
 
     useEffect(() => {
         setMounted(true);
@@ -47,8 +54,14 @@ export function HomeContent() {
 
     const bgColor = getBgColor();
 
+    // Prevent hydration mismatch by returning null until mounted and loaded
+    if (!mounted || !isLoaded) return null;
+
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col transition-all duration-1000">
+        <div
+            className="flex flex-col min-h-[calc(100vh-4rem)] space-y-8 transition-colors duration-1000 ease-in-out"
+            style={{ backgroundColor: bgColor }}
+        >
             {/* Global Navbar - Neutral Light/Dark */}
             <div className="w-full sticky top-0 z-50">
                 <BotNavbar
@@ -64,12 +77,12 @@ export function HomeContent() {
 
             {/* Themed Content Section - Primary Product Experience */}
             <main
-                className="flex-1 w-full transition-all duration-1000 ease-in-out py-12 md:py-20 flex flex-col gap-12 items-center"
-                style={{ backgroundColor: bgColor }}
+                className="flex-1 w-full flex flex-col gap-12 items-center py-12 md:py-20"
             >
                 <div className="w-full max-w-2xl px-4 flex flex-col gap-8 md:gap-16">
                     {/* Timer Section */}
-                    <div className="w-full flex justify-center">
+                    <div className="w-full flex flex-col items-center gap-6 justify-center">
+                        <StreakBadge />
                         <PremiumTimer
                             onTypeChange={setMode}
                             onRunningChange={setIsRunning}

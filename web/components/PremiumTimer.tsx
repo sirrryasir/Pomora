@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Maximize, Minimize } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useSettings } from '@/components/SettingsContext';
 import { motion, AnimatePresence } from 'framer-motion';
+
+
 
 export function PremiumTimer({
     onTypeChange,
@@ -33,8 +35,10 @@ export function PremiumTimer({
         progress,
     } = useTimer(onFocusComplete);
 
-    const { theme: currentTheme, setTheme } = useTheme();
+    const { theme: currentTheme, resolvedTheme, setTheme } = useTheme();
     const { settings } = useSettings();
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         onTypeChange?.(type);
@@ -43,6 +47,31 @@ export function PremiumTimer({
     useEffect(() => {
         onRunningChange?.(isRunning);
     }, [isRunning, onRunningChange]);
+
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement && containerRef.current) {
+            containerRef.current.requestFullscreen().then(() => {
+                setIsFullScreen(true);
+            }).catch((err) => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().then(() => {
+                    setIsFullScreen(false);
+                });
+            }
+        }
+    };
+
+    useEffect(() => {
+        const handleFullScreenChange = () => {
+            setIsFullScreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullScreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    }, []);
 
     const getTheme = () => {
         switch (type) {
@@ -83,8 +112,41 @@ export function PremiumTimer({
 
     const theme = getTheme();
 
+    const getFullScreenBg = () => {
+        // Priority 1: Dark Mode When Running
+        if (settings.darkModeWhenRunning && isRunning && type === 'focus') {
+            return '#09090b';
+        }
+
+        // Priority 2: Custom Theme Colors
+        if (settings.themeColors) {
+            switch (type) {
+                case 'focus': return settings.themeColors.focus;
+                case 'short_break': return settings.themeColors.shortBreak;
+                case 'long_break': return settings.themeColors.longBreak;
+            }
+        }
+
+        // Priority 3: Default Colors
+        switch (type) {
+            case 'focus': return '#d95550';
+            case 'short_break': return '#4c9195';
+            case 'long_break': return '#457ba5';
+            default: return '#d95550';
+        }
+    };
+
     return (
-        <div className="w-full max-w-xl mx-auto px-2">
+        <div
+            ref={containerRef}
+            className={cn(
+                "w-full max-w-xl mx-auto px-2 transition-all duration-500",
+                isFullScreen && "flex items-center justify-center h-screen w-screen max-w-none px-0 overflow-y-auto"
+            )}
+            style={{
+                backgroundColor: isFullScreen ? getFullScreenBg() : 'transparent'
+            }}
+        >
             <div className="relative bg-white/10 backdrop-blur-md rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 flex flex-col items-center gap-8 md:gap-10 border border-white/10 shadow-2xl overflow-hidden">
                 {/* Glowing Progress Line */}
                 <div className="absolute top-0 left-0 w-full h-[6px] bg-white/5 overflow-hidden">
@@ -140,32 +202,72 @@ export function PremiumTimer({
                             <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest font-black text-white/40">
                                 Round {round}
                             </div>
-                            <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest font-black text-white/40">
-                                {dailySessions} Today
+                        </div>
+
+                        {/* Daily Goal Widget */}
+                        <div className="relative group cursor-help">
+                            <div className="absolute inset-0 bg-white/20 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="relative px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                                <div className="relative w-4 h-4">
+                                    <svg className="w-full h-full -rotate-90">
+                                        <circle cx="50%" cy="50%" r="7" className="stroke-white/10 fill-none" strokeWidth="2" />
+                                        <circle
+                                            cx="50%" cy="50%" r="7"
+                                            className="stroke-white fill-none transition-all duration-1000 ease-out"
+                                            strokeWidth="2"
+                                            strokeDasharray="44"
+                                            strokeDashoffset={44 - (44 * Math.min(dailySessions, settings.dailyGoal) / settings.dailyGoal)}
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                </div>
+                                <span className="text-[10px] uppercase tracking-widest font-black text-white/60">
+                                    {dailySessions}/{settings.dailyGoal} Today
+                                </span>
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Daily Goal: 4 Hours
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex items-center justify-center gap-4 md:gap-8 w-full">
-                    <Button
-                        size="lg"
-                        className={cn(
-                            'h-16 md:h-20 flex-1 max-w-[200px] rounded-xl md:rounded-2xl text-xl md:text-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl bg-white text-black hover:bg-zinc-100 border-none'
-                        )}
-                        onClick={isRunning ? pause : start}
-                    >
-                        {isRunning ? <Pause className="w-6 h-6 md:w-8 md:h-8 fill-current" /> : <Play className="w-6 h-6 md:w-8 md:h-8 fill-current" />}
-                    </Button>
+                    <div className="flex items-center justify-center gap-4 md:gap-8 w-full mt-4">
+                        <Button
+                            size="lg"
+                            className={cn(
+                                'h-16 md:h-20 flex-1 max-w-[200px] rounded-xl md:rounded-2xl text-xl md:text-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl bg-white text-black hover:bg-zinc-100 border-none'
+                            )}
+                            onClick={isRunning ? pause : start}
+                        >
+                            {isRunning ? <Pause className="w-6 h-6 md:w-8 md:h-8 fill-current" /> : <Play className="w-6 h-6 md:w-8 md:h-8 fill-current" />}
+                        </Button>
 
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-16 w-16 md:h-20 md:w-20 rounded-xl md:rounded-2xl text-white/50 hover:text-white hover:bg-white/10 hover:rotate-[-12deg] transition-all duration-500"
-                        onClick={reset}
-                    >
-                        <RotateCcw className="w-6 h-6 md:w-8 md:h-8" />
-                    </Button>
+                        <div className="flex gap-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-16 w-16 md:h-20 md:w-20 rounded-xl md:rounded-2xl text-white/80 hover:text-white hover:bg-white/10 hover:rotate-[-12deg] transition-all duration-500"
+                                onClick={reset}
+                            >
+                                <RotateCcw className="w-6 h-6 md:w-8 md:h-8" />
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-16 w-16 md:h-20 md:w-20 rounded-xl md:rounded-2xl text-white/80 hover:text-white hover:bg-white/10 hover:rotate-[12deg] transition-all duration-500"
+                                onClick={toggleFullScreen}
+                            >
+                                {isFullScreen ? (
+                                    <Minimize className="w-6 h-6 md:w-8 md:h-8" />
+                                ) : (
+                                    <Maximize className="w-6 h-6 md:w-8 md:h-8" />
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -20,8 +20,22 @@ export function BotNavbar({
     extra?: React.ReactNode
 }) {
     const [isInternalMenuOpen, setIsInternalMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const isOpen = isMenuOpen ?? isInternalMenuOpen;
+
+    // Handle scroll state
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 0);
+        };
+
+        // Initial check
+        handleScroll();
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Close internal menu on resize
     useEffect(() => {
@@ -33,7 +47,10 @@ export function BotNavbar({
     }, []);
 
     return (
-        <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <header className={`border-b sticky top-0 z-50 transition-all duration-300 ${isScrolled
+                ? "border-border bg-background/80 backdrop-blur-md"
+                : "border-transparent bg-background"
+            }`}>
             <div className="container mx-auto px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     {/* Mobile Menu Toggle */}

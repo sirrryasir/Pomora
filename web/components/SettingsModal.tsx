@@ -167,6 +167,27 @@ export function SettingsModal() {
                                 >+</Button>
                             </div>
                         </div>
+
+                        <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                            <div className="space-y-0.5">
+                                <Label className="text-[10px] uppercase font-black text-foreground/40 tracking-widest">Daily Goal</Label>
+                                <p className="text-sm font-bold">{settings.dailyGoal} Sessions</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg border-border"
+                                    onClick={() => updateSettings({ dailyGoal: Math.max(1, settings.dailyGoal - 1) })}
+                                >-</Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg border-border"
+                                    onClick={() => updateSettings({ dailyGoal: settings.dailyGoal + 1 })}
+                                >+</Button>
+                            </div>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="theme" className="space-y-8">
@@ -224,7 +245,7 @@ export function SettingsModal() {
 
                         <div className="space-y-6 pt-4 border-t border-border/50">
                             <div className="space-y-2">
-                                <Label className="text-sm font-bold">Ticking Sound</Label>
+                                <Label className="text-sm font-bold">Background Sound</Label>
                                 <p className="text-[10px] text-foreground/40 lowercase">Choose ambient sound for focus sessions</p>
                                 <select
                                     value={settings.tickingSound}
@@ -234,8 +255,11 @@ export function SettingsModal() {
                                     <option value="none" className="bg-background text-foreground">None</option>
                                     <option value="slow" className="bg-background text-foreground">Ticking Slow</option>
                                     <option value="fast" className="bg-background text-foreground">Ticking Fast</option>
+
                                 </select>
                             </div>
+
+
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
@@ -251,7 +275,10 @@ export function SettingsModal() {
                                                     slow: '/sounds/ticking-slow.mp3',
                                                     fast: '/sounds/ticking-fast.mp3',
                                                 };
+
+
                                                 const url = TICKING_SOUNDS[settings.tickingSound];
+
                                                 if (url) {
                                                     const audio = new Audio(url);
                                                     audio.volume = settings.tickingVolume / 100;
