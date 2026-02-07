@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Check, MoreVertical, Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Check, MoreVertical, Plus, Trash2, Loader2, CheckCircle2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -23,6 +23,11 @@ export function Tasks({ tasksHook }: TasksProps) {
     const [newTitle, setNewTitle] = useState('');
     const [estPomodoros, setEstPomodoros] = useState(1);
 
+    // Edit State
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+    const [editTitle, setEditTitle] = useState('');
+    const [editEstPomodoros, setEditEstPomodoros] = useState(1);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTitle.trim()) return;
@@ -31,6 +36,29 @@ export function Tasks({ tasksHook }: TasksProps) {
         setNewTitle('');
         setEstPomodoros(1);
         setIsAdding(false);
+    };
+
+    const startEditing = (task: any) => {
+        setEditingTaskId(task.id);
+        setEditTitle(task.title);
+        setEditEstPomodoros(task.estPomodoros);
+    };
+
+    const cancelEditing = () => {
+        setEditingTaskId(null);
+        setEditTitle('');
+        setEditEstPomodoros(1);
+    };
+
+    const saveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingTaskId && editTitle.trim()) {
+            await updateTask(editingTaskId, {
+                title: editTitle,
+                estPomodoros: editEstPomodoros
+            });
+            setEditingTaskId(null);
+        }
     };
 
     if (loading) {
@@ -71,53 +99,115 @@ export function Tasks({ tasksHook }: TasksProps) {
 
             <ScrollArea className="h-[300px] mb-6 pr-4">
                 <div className="space-y-3">
-                    {tasks.map(task => (
-                        <div
-                            key={task.id}
-                            onClick={() => setActiveTaskId(task.id)}
-                            className={cn(
-                                "group relative flex items-center gap-4 p-4 rounded-xl border border-transparent transition-all cursor-pointer",
-                                activeTaskId === task.id ? "bg-white/10 border-white/20 shadow-lg scale-[1.02]" : "bg-white/5 hover:bg-white/[0.07]",
-                                task.completed && "opacity-50 grayscale"
-                            )}
-                        >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevent activating task when clicking check
-                                    toggleComplete(task.id);
+                    {tasks.map(task => {
+                        if (editingTaskId === task.id) {
+                            return (
+                                <div key={task.id} className="p-4 bg-white/5 rounded-xl border border-white/20 animate-in fade-in zoom-in-95">
+                                    <form onSubmit={saveEdit}>
+                                        <Input
+                                            autoFocus
+                                            value={editTitle}
+                                            onChange={(e) => setEditTitle(e.target.value)}
+                                            className="bg-transparent border-none text-lg font-bold text-white placeholder:text-white/20 focus-visible:ring-0 px-0 mb-4"
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-bold text-white/60">Est</p>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max="10"
+                                                    value={editEstPomodoros}
+                                                    onChange={(e) => setEditEstPomodoros(parseInt(e.target.value) || 1)}
+                                                    className="w-16 h-8 bg-white/10 border-none text-center font-mono font-bold text-white"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={cancelEditing}
+                                                    className="text-white/40 hover:text-white h-8"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    className="bg-black text-white hover:bg-zinc-800 font-bold px-4 rounded-lg h-8"
+                                                >
+                                                    Save
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div
+                                key={task.id}
+                                onClick={() => {
+                                    if (!task.completed) setActiveTaskId(task.id);
                                 }}
                                 className={cn(
-                                    "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                    task.completed ? "bg-red-400 border-red-400 text-white" : "border-white/30 hover:border-white/60"
+                                    "group relative flex items-center gap-4 p-4 rounded-xl border border-transparent transition-all",
+                                    activeTaskId === task.id ? "bg-white/10 border-white/20 shadow-lg scale-[1.02] cursor-default" :
+                                        task.completed ? "bg-white/5 opacity-60 cursor-default" : "bg-white/5 hover:bg-white/[0.07] cursor-pointer"
                                 )}
                             >
-                                {task.completed && <Check className="w-3.5 h-3.5" />}
-                            </button>
-
-                            <div className="flex-1">
-                                <span className={cn("font-medium text-white block", task.completed && "line-through text-white/40")}>
-                                    {task.title}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <span className="text-white/40 font-mono text-sm font-bold">
-                                    {task.actPomodoros} <span className="text-white/20">/</span> {task.estPomodoros}
-                                </span>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-white/20 hover:text-white hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        deleteTask(task.id);
+                                        toggleComplete(task.id);
                                     }}
+                                    className={cn(
+                                        "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
+                                        task.completed ? "bg-red-400 border-red-400 text-white" : "border-white/30 hover:border-white/60"
+                                    )}
                                 >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
+                                    {task.completed && <Check className="w-3.5 h-3.5" />}
+                                </button>
+
+                                <div className="flex-1 min-w-0">
+                                    <span className={cn("font-medium text-white block truncate", task.completed && "line-through text-white/40")}>
+                                        {task.title}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-white/40 font-mono text-sm font-bold mr-2">
+                                        {task.actPomodoros} <span className="text-white/20">/</span> {task.estPomodoros}
+                                    </span>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-white/20 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            startEditing(task);
+                                        }}
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-white/20 hover:text-white hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteTask(task.id);
+                                        }}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </ScrollArea>
 

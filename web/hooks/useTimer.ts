@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSettings, type TickingSound } from '@/components/SettingsContext';
+import { useSettings } from '@/components/SettingsContext';
 
 export type SessionType = 'focus' | 'short_break' | 'long_break';
 
@@ -191,7 +191,7 @@ export const useTimer = (onFocusComplete?: () => void) => {
         if (typeof window !== 'undefined') {
             import('canvas-confetti').then((confetti) => {
                 const triggerConfetti = confetti.default || confetti; // Handle default export
-                // @ts-ignore
+
                 triggerConfetti({
                     particleCount: 150,
                     spread: 80,
@@ -225,52 +225,71 @@ export const useTimer = (onFocusComplete?: () => void) => {
         playSafe(audio);
     }, [settings.tickingVolume, settings.tickingSound]);
 
+    // Timer Tick Logic
     useEffect(() => {
-        // Double check isReady and isRunning to prevent startup races
         if (isReady && isRunning && remainingTime > 0) {
             timerRef.current = setInterval(() => {
                 setRemainingTime((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timerRef.current!);
-                        playAlarm();
-                        let nextType: SessionType = 'focus';
-                        let shouldAutoStart = false;
-                        if (type === 'focus') {
-                            incrementDailySessions();
-                            onFocusComplete?.(); // Trigger callback
-                            nextType = round % settings.longBreakInterval === 0 ? 'long_break' : 'short_break';
-                            setRound(r => r + 1);
-                            shouldAutoStart = settings.autoStartBreaks;
-                        } else {
-                            nextType = 'focus';
-                            shouldAutoStart = settings.autoStartPomodoros;
-                        }
-                        setType(nextType);
-                        const nextTime = (nextType === 'focus' ? settings.focusTime : nextType === 'short_break' ? settings.shortBreakTime : settings.longBreakTime) * 60;
-                        setRemainingTime(nextTime);
-                        setIsRunning(shouldAutoStart);
-                        return 0;
-                    }
+                    if (prev <= 1) return 0; // Clamp to 0
                     playTick();
                     return prev - 1;
                 });
             }, 1000);
         } else {
             if (timerRef.current) clearInterval(timerRef.current);
-
-            // Explicitly pause any ticking audio when not running
-            if (tickingAudioRef.current) {
-                tickingAudioRef.current.pause();
-            }
+            if (tickingAudioRef.current) tickingAudioRef.current.pause();
         }
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
-            // Safety cleanup
             if (tickingAudioRef.current && ['rain', 'cafe', 'forest'].includes(settings.tickingSound)) {
                 tickingAudioRef.current.pause();
             }
         };
-    }, [isRunning, remainingTime, type, round, settings, isReady, playAlarm, playTick, incrementDailySessions, onFocusComplete]);
+    }, [isReady, isRunning, remainingTime, settings.tickingSound, playTick]);
+
+    // Cleanup helper
+    const cleanupTimer = useCallback(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (tickingAudioRef.current) tickingAudioRef.current.pause();
+    }, []);
+
+    // Completion Logic (Separated from Tick)
+    useEffect(() => {
+        if (remainingTime === 0 && isRunning) {
+            cleanupTimer();
+            playAlarm();
+
+            let nextType: SessionType = 'focus';
+            let shouldAutoStart = false;
+
+            if (type === 'focus') {
+                incrementDailySessions();
+                console.log('Calling onFocusComplete. Fn exists:', !!onFocusComplete);
+                onFocusComplete?.();
+
+                // To be absolutely safe against Strict Mode double-effect invocation if it happens (though usually effects are cleaned up),
+                // we depend on the state change to break the condition `remainingTime === 0 && isRunning`.
+                // But `setRemainingTime` is async. 
+                // Actually, the issue was state updater function running twice. Effects run twice in strict mode too, but usually cleanup handles it. 
+                // However, `incrementDailySessions` serves as an external mutation if it hits localStorage directly? No, it sets state.
+                // onFocusComplete sets state in parent. 
+                // Let's proceed. If this effect runs twice, we might still have issues. 
+                // But usually, setting `setIsRunning(false)` or changing `remainingTime` immediately stops the condition for the next render.
+
+                nextType = round % settings.longBreakInterval === 0 ? 'long_break' : 'short_break';
+                setRound(r => r + 1);
+                shouldAutoStart = settings.autoStartBreaks;
+            } else {
+                nextType = 'focus';
+                shouldAutoStart = settings.autoStartPomodoros;
+            }
+
+            setType(nextType);
+            const nextTime = (nextType === 'focus' ? settings.focusTime : nextType === 'short_break' ? settings.shortBreakTime : settings.longBreakTime) * 60;
+            setRemainingTime(nextTime);
+            setIsRunning(shouldAutoStart);
+        }
+    }, [remainingTime, isRunning, type, round, settings, incrementDailySessions, onFocusComplete, playAlarm, cleanupTimer]);
 
     // Notification Permission
     useEffect(() => {

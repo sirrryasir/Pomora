@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface Task {
@@ -19,25 +19,7 @@ export function useTasks() {
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Initial Load
-    useEffect(() => {
-        if (!authLoading) {
-            fetchTasks();
-            const savedActive = localStorage.getItem(ACTIVE_TASK_KEY);
-            if (savedActive) setActiveTaskId(savedActive);
-        }
-    }, [user, authLoading]);
-
-    // Save active task persistence
-    useEffect(() => {
-        if (activeTaskId) {
-            localStorage.setItem(ACTIVE_TASK_KEY, activeTaskId);
-        } else {
-            localStorage.removeItem(ACTIVE_TASK_KEY);
-        }
-    }, [activeTaskId]);
-
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
             if (user) {
@@ -45,7 +27,7 @@ export function useTasks() {
                 if (resp.ok) {
                     const rawData = await resp.json();
                     // Parse content field to get Task object, or fallback if legacy note
-                    const parsedTasks = rawData.map((item: any) => {
+                    const parsedTasks = rawData.map((item: { id: string; content: string; created_at: string; title?: string }) => {
                         try {
                             const parsed = JSON.parse(item.content);
                             if (parsed.title !== undefined && parsed.estPomodoros !== undefined) {
@@ -54,7 +36,7 @@ export function useTasks() {
                             // Legacy note fallback (create a task from it)
                             return {
                                 id: item.id,
-                                title: item.content,
+                                title: item.title || item.content,
                                 estPomodoros: 1,
                                 actPomodoros: 0,
                                 completed: false,
@@ -82,7 +64,27 @@ export function useTasks() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    // Initial Load
+    useEffect(() => {
+        if (!authLoading) {
+            fetchTasks();
+            const savedActive = localStorage.getItem(ACTIVE_TASK_KEY);
+            if (savedActive) setActiveTaskId(savedActive);
+        }
+    }, [authLoading, fetchTasks]);
+
+    // Save active task persistence
+    useEffect(() => {
+        if (activeTaskId) {
+            localStorage.setItem(ACTIVE_TASK_KEY, activeTaskId);
+        } else {
+            localStorage.removeItem(ACTIVE_TASK_KEY);
+        }
+    }, [activeTaskId]);
+
+
 
     const addTask = async (title: string, estPomodoros: number) => {
         const newTaskContent = {
@@ -160,13 +162,56 @@ export function useTasks() {
         if (task) updateTask(id, { completed: !task.completed });
     };
 
-    const incrementActiveTask = () => {
-        if (!activeTaskId) return;
-        const task = tasks.find(t => t.id === activeTaskId);
-        if (task) {
-            updateTask(activeTaskId, { actPomodoros: task.actPomodoros + 1 });
+    const incrementActiveTask = useCallback(() => {
+
+        setTasks(prevTasks => {
+            if (!activeTaskId) {
+                console.warn('No active task to increment');
+                return prevTasks;
+            }
+
+            const taskIndex = prevTasks.findIndex(t => t.id === activeTaskId);
+            if (taskIndex === -1) {
+                console.warn('Active task not found in list');
+                return prevTasks;
+            }
+
+            const updatedTasks = [...prevTasks];
+            const task = updatedTasks[taskIndex];
+
+            // Auto-complete logic
+            const newActPomodoros = task.actPomodoros + 1;
+            const shouldComplete = newActPomodoros >= task.estPomodoros;
+
+
+
+            const updatedTask = {
+                ...task,
+                actPomodoros: newActPomodoros,
+                completed: shouldComplete || task.completed
+            };
+            updatedTasks[taskIndex] = updatedTask;
+
+            // Trigger backend update (safe side-effect as it is idempotent 'set' operation)
+            if (user) {
+                updateTaskBackend(activeTaskId, updatedTask);
+            } else {
+                localStorage.setItem(GUEST_TASKS_KEY, JSON.stringify(updatedTasks));
+            }
+
+            return updatedTasks;
+        });
+    }, [activeTaskId, user]);
+
+    // Invariant: Active task cannot be completed
+    useEffect(() => {
+        if (activeTaskId) {
+            const task = tasks.find(t => t.id === activeTaskId);
+            if (task && task.completed) {
+                setActiveTaskId(null);
+            }
         }
-    };
+    }, [activeTaskId, tasks]);
 
     // Helper to update backend (will implement PATCH check next)
     const updateTaskBackend = async (id: string, task: Task) => {
