@@ -183,7 +183,7 @@ export const useTimer = (onFocusComplete?: () => void) => {
         audio.volume = settings.alarmVolume / 100;
         audio.play().catch(() => { });
 
-        if (Notification.permission === 'granted') {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             new Notification('Pomora', { body: 'Session complete!', icon: '/favicon.ico' });
         }
 
