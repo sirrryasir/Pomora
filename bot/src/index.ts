@@ -2,15 +2,10 @@ import { Client, GatewayIntentBits, Interaction, MessageFlags, ModalBuilder, Tex
 import ffmpegPath from 'ffmpeg-static';
 import { config } from 'dotenv';
 
-// Force FFmpeg path for prism-media (used by @discordjs/voice)
-if (ffmpegPath) {
-    process.env.FFMPEG_PATH = ffmpegPath;
-    console.log(`[FFmpeg] Path set to: ${ffmpegPath}`);
-} else {
-    console.warn('[FFmpeg] Warning: ffmpeg-static returned null path.');
+// Load environment variables only if not explicitly set (Render/Production handles this natively)
+if (!process.env.DISCORD_TOKEN || !process.env.DATABASE_URL) {
+    config();
 }
-
-config();
 import http from 'node:http';
 import { VoiceManager } from './services/VoiceManager.js';
 import { TimerService } from './services/TimerService.js';
@@ -247,4 +242,12 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 client.on('error', error => console.error('Client error:', error));
 process.on('unhandledRejection', error => console.error('Unhandled rejection:', error));
 
-client.login(process.env.DISCORD_TOKEN);
+const token = process.env.DISCORD_TOKEN?.trim();
+
+if (!token) {
+    console.error('[Bot] ❌ No DISCORD_TOKEN found in environment!');
+} else {
+    const masked = token.substring(0, 4) + '...' + token.substring(token.length - 4);
+    console.log(`[Bot] Attempting login with token: ${masked}`);
+    client.login(token);
+}

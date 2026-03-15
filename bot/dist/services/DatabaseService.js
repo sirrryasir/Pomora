@@ -5,23 +5,35 @@ const globalForPrisma = globalThis;
 export class DatabaseService {
     prisma;
     constructor() {
-        const databaseUrl = process.env.DATABASE_URL || "";
+        const rawUrl = process.env.DATABASE_URL || "";
+        const databaseUrl = rawUrl.trim();
         if (!databaseUrl) {
-            console.warn('[DatabaseService] ⚠️ DATABASE_URL missing. Operations will fail.');
+            console.warn('[DatabaseService] ⚠️ DATABASE_URL missing or empty. Operations will fail.');
+            // Fail fast for index creation or critical paths if possible
+            this.prisma = new PrismaClient();
         }
-        const separator = databaseUrl.includes('?') ? '&' : '?';
-        // Limit bot to 3 connections to save pool space for the web app
-        const finalUrl = `${databaseUrl}${separator}connect_timeout=15&pool_timeout=15&connection_limit=3`;
-        this.prisma = globalForPrisma.prisma ?? new PrismaClient({
-            datasources: {
-                db: {
-                    url: finalUrl,
+        else {
+            const separator = databaseUrl.includes('?') ? '&' : '?';
+            const finalUrl = `${databaseUrl}${separator}connect_timeout=15&pool_timeout=15&connection_limit=3`;
+            // Masked host for debugging without leaking creds
+            try {
+                const host = new URL(databaseUrl).host;
+                console.log(`[DatabaseService] Connecting to host: ${host}`);
+            }
+            catch (e) {
+                console.warn('[DatabaseService] Could not parse host from URL.');
+            }
+            this.prisma = globalForPrisma.prisma ?? new PrismaClient({
+                datasources: {
+                    db: {
+                        url: finalUrl,
+                    },
                 },
-            },
-        });
-        if (process.env.NODE_ENV !== 'production')
-            globalForPrisma.prisma = this.prisma;
-        console.log(`[DatabaseService] Connected via Prisma (Limited pool).`);
+            });
+            if (process.env.NODE_ENV !== 'production')
+                globalForPrisma.prisma = this.prisma;
+            console.log(`[DatabaseService] Connected via Prisma (Limited pool).`);
+        }
     }
     isConnected() {
         return !!process.env.DATABASE_URL;
