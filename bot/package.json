@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate --schema=../web/prisma/schema.prisma && tsc",
     "start": "node dist/index.js",
-    "deploy-commands": "tsx src/deploy-commands.ts"
+    "deploy-commands": "tsx src/deploy-commands.ts",
+    "postinstall": "prisma generate --schema=../web/prisma/schema.prisma"
   },
   "keywords": [
     "discord",
@@ -35,6 +36,7 @@
     "libsodium-wrappers": "^0.8.2",
     "sodium-native": "^5.0.10",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "prisma": "^6"
   }
 }

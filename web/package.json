@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "BUN_DNS_ORDER=ipv4 NODE_OPTIONS=--dns-result-order=ipv4first next dev",
-    "build": "BUN_DNS_ORDER=ipv4 NODE_OPTIONS=--dns-result-order=ipv4first next build",
+    "build": "prisma generate && BUN_DNS_ORDER=ipv4 NODE_OPTIONS=--dns-result-order=ipv4first next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
