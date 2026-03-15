@@ -11,8 +11,7 @@ import { DatabaseService } from './services/DatabaseService.js';
 import { LeaderboardReporter } from './services/LeaderboardReporter.js';
 import { CommandRegistry } from './services/CommandRegistry.js';
 import { WelcomeService } from './services/WelcomeService.js';
-config();
-// Simple health check server for Railway/Deployment
+// Simple health check server
 const port = process.env.PORT || 8080;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -52,7 +51,7 @@ client.once(Events.ClientReady, async (c) => {
         // Let's use ActivityType.Watching for "Watching X People Studying" or just set state.
         // Using setPresence with activities
         c.user.setPresence({
-            activities: [{ name: `${totalUsers} People Working`, type: 3 }], // 3 = Watching 
+            activities: [{ name: `${totalUsers} People Working`, type: 3 }], // 3 = Watching
             status: 'online'
         });
     };
