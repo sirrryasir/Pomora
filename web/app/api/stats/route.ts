@@ -1,60 +1,45 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { cookies: { get: (name) => cookieStore.get(name)?.value } }
-        );
+        const session = await auth();
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-        const { data, error } = await supabase
-            .from('user_stats')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
-            console.error('Stats fetch error:', error);
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        return NextResponse.json(data || { total_focus_time: 0, current_streak: 0 });
+        const data = await prisma.userStats.findUnique({
+            where: { userId: session.user.id },
+        });
+
+        return NextResponse.json(data || { totalFocusTime: 0, currentStreak: 0 });
     } catch (e) {
+        console.error('Stats fetch error:', e);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
 export async function PATCH(request: Request) {
     try {
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { cookies: { get: (name) => cookieStore.get(name)?.value } }
-        );
+        const session = await auth();
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const { minutes } = await request.json();
         const MINUTES_TO_ADD = Number(minutes) || 25;
 
         // Fetch current stats
-        const { data: currentStats } = await supabase
-            .from('user_stats')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
+        const currentStats = await prisma.userStats.findUnique({
+            where: { userId: session.user.id },
+        });
 
         const today = new Date().toISOString().split('T')[0];
-        let newStreak = currentStats?.current_streak || 0;
-        let lastDate = currentStats?.last_focus_date;
+        let newStreak = currentStats?.currentStreak || 0;
+        const lastDate = currentStats?.lastFocusDate;
 
         // Streak Logic
         if (lastDate !== today) {
@@ -74,20 +59,24 @@ export async function PATCH(request: Request) {
             }
         }
 
-        const { data, error } = await supabase
-            .from('user_stats')
-            .upsert({
-                user_id: user.id,
-                email: user.email,
-                full_name: user.user_metadata.full_name || user.email?.split('@')[0],
-                total_focus_time: (currentStats?.total_focus_time || 0) + MINUTES_TO_ADD,
-                current_streak: newStreak,
-                last_focus_date: today
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
+        const data = await prisma.userStats.upsert({
+            where: { userId: session.user.id },
+            update: {
+                totalFocusTime: (currentStats?.totalFocusTime || 0) + MINUTES_TO_ADD,
+                currentStreak: newStreak,
+                lastFocusDate: today,
+                email: session.user.email || undefined,
+                fullName: session.user.name || session.user.email?.split('@')[0],
+            },
+            create: {
+                userId: session.user.id,
+                email: session.user.email || undefined,
+                fullName: session.user.name || session.user.email?.split('@')[0],
+                totalFocusTime: MINUTES_TO_ADD,
+                currentStreak: newStreak,
+                lastFocusDate: today,
+            },
+        });
 
         return NextResponse.json(data);
     } catch (e) {

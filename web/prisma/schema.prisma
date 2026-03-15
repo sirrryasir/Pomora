@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth.js Models ────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  notes         Note[]
+  stats         UserStats?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── App Models ────────────────────────────────────────────
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+model UserStats {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  email          String?
+  fullName       String?  @map("full_name")
+  totalFocusTime Int      @default(0) @map("total_focus_time")
+  currentStreak  Int      @default(0) @map("current_streak")
+  lastFocusDate  String?  @map("last_focus_date")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+// ─── Bot Models ────────────────────────────────────────────
+
+model GuildConfig {
+  guildId            String   @id @map("guild_id")
+  studyChannelId     String?  @map("study_channel_id")
+  reportChannelId    String?  @map("report_channel_id")
+  commandsChannelId  String?  @map("commands_channel_id")
+  adminRoleId        String?  @map("admin_role_id")
+  weeklyReportEnabled Boolean @default(true) @map("weekly_report_enabled")
+  dailyReportEnabled  Boolean @default(true) @map("daily_report_enabled")
+  timezone           String   @default("UTC")
+  welcomeChannelId   String?  @map("welcome_channel_id")
+  welcomeMessage     Json?    @map("welcome_message")
+  welcomeEnabled     Boolean  @default(false) @map("welcome_enabled")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("guild_configs")
+}
+
+model GuildStats {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  guildId     String   @map("guild_id")
+  userId      String   @map("user_id")
+  dailyTime   Int      @default(0) @map("daily_time")
+  weeklyTime  Int      @default(0) @map("weekly_time")
+  monthlyTime Int      @default(0) @map("monthly_time")
+  totalTime   Int      @default(0) @map("total_time")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([guildId, userId])
+  @@map("guild_stats")
+}
+
+model SessionLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id")
+  guildId     String?  @map("guild_id")
+  duration    Int
+  sessionType String   @default("focus") @map("session_type")
+  isWeb       Boolean  @default(false) @map("is_web")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("session_logs")
+}
+
+model ActiveChannelMessage {
+  channelId String   @id @map("channel_id")
+  guildId   String   @map("guild_id")
+  messageId String   @map("message_id")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("active_channel_messages")
+}
+

@@ -1,34 +1,15 @@
-// Forced re-compile: 2026-02-02
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-                set(name: string, value: string, options: any) {
-                    cookieStore.set({ name, value, ...options });
-                },
-                remove(name: string, options: any) {
-                    cookieStore.delete({ name, ...options });
-                },
-            },
-        }
-    );
+    const session = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -37,20 +18,20 @@ export async function PATCH(
         return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-        .from('notes')
-        .update({ content })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    try {
+        const data = await prisma.note.update({
+            where: {
+                id,
+                userId: session.user.id,
+            },
+            data: { content },
+        });
 
-    if (error) {
-        console.error(`[API/NOTES/PATCH/${id}] Database Error:`, error.message);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error(`[API/NOTES/PATCH/${id}] Database Error:`, error);
+        return NextResponse.json({ error: 'Note not found or access denied' }, { status: 404 });
     }
-
-    return NextResponse.json(data);
 }
 
 export async function DELETE(
@@ -58,40 +39,23 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-                set(name: string, value: string, options: any) {
-                    cookieStore.set({ name, value, ...options });
-                },
-                remove(name: string, options: any) {
-                    cookieStore.delete({ name, ...options });
-                },
-            },
-        }
-    );
+    const session = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+    try {
+        await prisma.note.delete({
+            where: {
+                id,
+                userId: session.user.id,
+            },
+        });
 
-    if (error) {
-        console.error(`[API/NOTES/DELETE/${id}] Database Error:`, error.message);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error(`[API/NOTES/DELETE/${id}] Database Error:`, error);
+        return NextResponse.json({ error: 'Note not found or access denied' }, { status: 404 });
     }
-
-    return NextResponse.json({ success: true });
 }

@@ -1,24 +1,18 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { cookies: { get: (name) => cookieStore.get(name)?.value } }
-        );
-
-        // Fetch top 10 users by total focus time
-        const { data, error } = await supabase
-            .from('user_stats')
-            .select('full_name, total_focus_time, current_streak')
-            .order('total_focus_time', { ascending: false })
-            .limit(10);
-
-        if (error) throw error;
+        // Leaderboard is public — no auth required
+        const data = await prisma.userStats.findMany({
+            select: {
+                fullName: true,
+                totalFocusTime: true,
+                currentStreak: true,
+            },
+            orderBy: { totalFocusTime: 'desc' },
+            take: 10,
+        });
 
         return NextResponse.json(data);
     } catch (e) {

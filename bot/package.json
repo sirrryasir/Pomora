@@ -23,8 +23,8 @@
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.19.0",
     "@napi-rs/canvas": "^0.1.89",
+    "@prisma/client": "^6",
     "@snazzah/davey": "^0.1.9",
-    "@supabase/supabase-js": "^2.93.3",
     "@types/node": "^25.1.0",
     "@types/ws": "^8.18.1",
     "axios": "^1.13.4",
@@ -33,7 +33,6 @@
     "ffmpeg-static": "^5.3.0",
     "gtts": "^0.2.1",
     "libsodium-wrappers": "^0.8.2",
-    "postgres": "^3.4.8",
     "sodium-native": "^5.0.10",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

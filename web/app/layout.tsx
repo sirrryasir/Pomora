@@ -89,6 +89,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsProvider } from "@/components/SettingsContext";
+import { SessionProvider } from "@/components/SessionProvider";
 
 export default function RootLayout({
   children,
@@ -100,16 +101,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-500`}
       >
-        <SettingsProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-        </SettingsProvider>
+        <SessionProvider>
+          <SettingsProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </SettingsProvider>
+        </SessionProvider>
       </body>
     </html>
   );

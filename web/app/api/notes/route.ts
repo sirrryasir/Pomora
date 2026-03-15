@@ -1,93 +1,33 @@
-// Forced re-compile: 2026-02-02
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-            console.error('[API/NOTES/GET] Missing Supabase environment variables');
-            return NextResponse.json({ error: 'Internal Server Configuration Error' }, { status: 500 });
-        }
+        const session = await auth();
 
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                    set(name: string, value: string, options: any) {
-                        cookieStore.set({ name, value, ...options });
-                    },
-                    remove(name: string, options: any) {
-                        cookieStore.delete({ name, ...options });
-                    },
-                },
-            }
-        );
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError) {
-            console.error('[API/NOTES/GET] Auth Error:', authError.message);
-            // Don't return 500 for auth errors, just 401 if unauthorized
-        }
-
-        if (!user) {
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data, error } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('[API/NOTES/GET] Database Error:', error.message, error.details, error.hint);
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
+        const data = await prisma.note.findMany({
+            where: { userId: session.user.id },
+            orderBy: { createdAt: 'desc' },
+        });
 
         return NextResponse.json(data);
-    } catch (e: any) {
-        console.error('[API/NOTES/GET] Unexpected Exception:', e.message, e.stack);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        console.error('[API/NOTES/GET] Unexpected Exception:', message);
         return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-            console.error('[API/NOTES/POST] Missing Supabase environment variables');
-            return NextResponse.json({ error: 'Internal Server Configuration Error' }, { status: 500 });
-        }
+        const session = await auth();
 
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                    set(name: string, value: string, options: any) {
-                        cookieStore.set({ name, value, ...options });
-                    },
-                    remove(name: string, options: any) {
-                        cookieStore.delete({ name, ...options });
-                    },
-                },
-            }
-        );
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            console.error('[API/NOTES/POST] Auth Error or No User:', authError?.message);
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -96,23 +36,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Content is required' }, { status: 400 });
         }
 
-        const { data, error } = await supabase
-            .from('notes')
-            .insert({
-                user_id: user.id,
-                content
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('[API/NOTES/POST] Database Error:', error.message, error.details, error.hint);
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
+        const data = await prisma.note.create({
+            data: {
+                userId: session.user.id,
+                content,
+            },
+        });
 
         return NextResponse.json(data);
-    } catch (e: any) {
-        console.error('[API/NOTES/POST] Unexpected Exception:', e.message, e.stack);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        console.error('[API/NOTES/POST] Unexpected Exception:', message);
         return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
     }
 }

@@ -8,19 +8,19 @@ import { BarChart, Trophy, Clock, Calendar, Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Stats {
-    total_focus_time: number;
-    current_streak: number;
-    last_focus_date: string;
+    totalFocusTime: number;
+    currentStreak: number;
+    lastFocusDate: string;
 }
 
 interface LeaderboardEntry {
-    full_name: string;
-    total_focus_time: number;
-    current_streak: number;
+    fullName: string;
+    totalFocusTime: number;
+    currentStreak: number;
 }
 
 export function ReportModal({ children }: { children?: React.ReactNode }) {
-    const { user, signInWithGoogle } = useAuth();
+    const { user, signIn } = useAuth();
     const [stats, setStats] = useState<Stats | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export function ReportModal({ children }: { children?: React.ReactNode }) {
                             Log in to track your focus hours, build streaks, and join the global leaderboard.
                         </p>
                         <Button
-                            onClick={signInWithGoogle}
+                            onClick={() => signIn('google')}
                             className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl"
                         >
                             Sign In with Google
@@ -86,26 +86,26 @@ export function ReportModal({ children }: { children?: React.ReactNode }) {
                                 <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 flex flex-col items-center justify-center text-center gap-2">
                                     <Clock className="w-5 h-5 text-orange-500" />
                                     <span className="text-2xl font-black text-foreground">
-                                        {(stats?.total_focus_time || 0) / 60 < 0.01
+                                        {(stats?.totalFocusTime || 0) / 60 < 0.01
                                             ? '0'
-                                            : ((stats?.total_focus_time || 0) / 60).toFixed(3)}
+                                            : ((stats?.totalFocusTime || 0) / 60).toFixed(3)}
                                     </span>
                                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Hours Focused</span>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 flex flex-col items-center justify-center text-center gap-2">
                                     <Calendar className="w-5 h-5 text-blue-500" />
                                     <span className="text-2xl font-black text-foreground">
-                                        {/* Simplified logic for MVP: just showing days accessed could be inferred or stored separately. For now, let's use a dummy or just hide if complex. 
-                                            Actually let's just show Streak here twice or Total Sessions if we had it. 
+                                        {/* Simplified logic for MVP: just showing days accessed could be inferred or stored separately. For now, let's use a dummy or just hide if complex.
+                                            Actually let's just show Streak here twice or Total Sessions if we had it.
                                             Let's use Current Streak. */}
-                                        {stats?.current_streak || 0}
+                                        {stats?.currentStreak || 0}
                                     </span>
                                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Day Streak</span>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 flex flex-col items-center justify-center text-center gap-2">
                                     <Trophy className="w-5 h-5 text-red-500" />
                                     <span className="text-2xl font-black text-foreground">
-                                        #{leaderboard.findIndex(u => u.total_focus_time === stats?.total_focus_time) + 1 || '-'}
+                                        #{leaderboard.findIndex(u => u.totalFocusTime === stats?.totalFocusTime) + 1 || '-'}
                                     </span>
                                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Global Rank</span>
                                 </div>
@@ -134,17 +134,17 @@ export function ReportModal({ children }: { children?: React.ReactNode }) {
                                                         {index + 1}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-sm">{entry.full_name || 'Anonymous User'}</span>
-                                                        {entry.current_streak > 0 && (
+                                                        <span className="font-bold text-sm">{entry.fullName || 'Anonymous User'}</span>
+                                                        {entry.currentStreak > 0 && (
                                                             <span className="text-[10px] text-orange-500 font-bold flex items-center gap-1">
                                                                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                                                {entry.current_streak} Day Streak
+                                                                {entry.currentStreak} Day Streak
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
                                                 <span className="font-mono text-sm opacity-70">
-                                                    {formatTime(entry.total_focus_time)}
+                                                    {formatTime(entry.totalFocusTime)}
                                                 </span>
                                             </div>
                                         ))}
