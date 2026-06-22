@@ -1,145 +1,111 @@
-# 🍅 Pomora - Time-Based Productivity Bot & Web Dashboard
+# Pomora - Discord Pomodoro Timer Bot with Dashboard
 
-<div align="center">
-  <p>
-    <a href="https://github.com/sirrryasir/pomora"><img src="https://img.shields.io/badge/Discord%20Bot-TypeScript-5865F2?style=flat-square&logo=discord" alt="Discord" /></a>
-    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-20.x-339933?style=flat-square&logo=nodedotjs" alt="Node.js" /></a>
-    <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs" alt="Next.js" /></a>
-    <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-Package%20Manager-000000?style=flat-square&logo=bun" alt="Bun" /></a>
-  </p>
-</div>
+Multi-user Pomodoro timer bot for Discord with customizable focus/break sessions and leaderboard tracking.
 
----
+## What It Does
 
-## 📌 Overview
+Pomora runs productivity timer sessions in Discord channels. Multiple users join a focus room, get customizable work/break cycles, and compete on leaderboards. Includes web dashboard for analytics.
 
-**Pomora** is a productivity suite combining a Discord bot and modern web dashboard. Based on the Pomodoro technique, it helps developers and teams manage work sessions, track focus time, and maintain productivity metrics. Use the Discord bot for real-time notifications or the web dashboard for detailed analytics.
+## Features
 
----
+Timer System:
+- Focus and break sessions (default: 50 min focus, 10 min break)
+- Customizable session durations
+- Sound and voice notifications
+- Multi-user rooms (one timer per Discord channel)
+- Tracks participants and missed sessions
 
-## ✨ Key Features
+Tracking:
+- Records sessions completed per user
+- Tracks missed ticks (skipped sessions)
+- Leaderboard by guild
 
-- **⏱️ Pomodoro Sessions**: Timer-based work/break cycles with Discord notifications
-- **📊 Analytics Dashboard**: Visual productivity metrics and session history
-- **🔔 Real-time Notifications**: Get pinged in Discord when sessions start/end
-- **👥 Team Tracking**: Monitor team productivity and collaboration patterns
-- **📈 Weekly Reports**: Auto-generated productivity summaries
-- **🎯 Goal Setting**: Define and track focus goals
-- **⚙️ Custom Intervals**: Adjustable work/break durations
+Discord Integration:
+- Commands in Discord
+- Voice channel support
+- Keyboard shortcut commands
+- Welcome messages
 
----
+Web Dashboard:
+- User login system
+- Timer page to see active sessions
+- Bot documentation
+- Leaderboard view
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **Discord Bot** | discord.js, TypeScript, Node.js |
-| **Web Dashboard** | Next.js 15, React, TailwindCSS |
-| **Database** | MongoDB |
-| **Package Manager** | Bun 1.3.x |
+Bot:
+- Node.js + discord.js (v14)
+- TypeScript
+- Prisma ORM (database)
+- Bun package manager
 
----
+Web Dashboard:
+- Next.js 15
+- React 19
+- TypeScript
+- TailwindCSS
 
-## 🚀 Quick Start
+Database:
+- Prisma (type specified in bot package, likely PostgreSQL or MongoDB)
 
-### Prerequisites
-- Node.js 20.x or Bun 1.3.x
-- Discord Bot Token (from [Discord Developer Portal](https://discord.com/developers/applications))
-- MongoDB connection string
+## How It Works
 
-### 1. Clone & Install
+1. User runs Discord bot command in a channel
+2. Timer room created (first time only)
+3. Multiple users can join same timer
+4. Focus and break cycles run
+5. Users mark themselves "present" or miss ticks
+6. Sessions tracked in database
+7. Dashboard shows stats and leaderboards
+
+## Project Structure
+
+```
+pomora/
+├── bot/                 Discord bot
+│   ├── src/
+│   │   ├── index.ts
+│   │   └── services/
+│   │       ├── TimerService.ts
+│   │       ├── DatabaseService.ts
+│   │       ├── LeaderboardReporter.ts
+│   │       └── ...
+├── web/                 Next.js dashboard
+│   ├── app/
+│   │   ├── page.tsx
+│   │   ├── timer/page.tsx
+│   │   ├── bot/page.tsx
+│   │   └── login/page.tsx
+└── bun.lock
+```
+
+## Installation
+
 ```bash
 git clone https://github.com/sirrryasir/pomora.git
 cd pomora
 bun install
 ```
 
-### 2. Configure Environment
-Create a `.env.local` file:
-```env
-DISCORD_TOKEN=your_discord_bot_token
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/pomora
-NEXT_PUBLIC_API_URL=http://localhost:3001
-```
-
-### 3. Start Services
-
-**Discord Bot:**
+Bot:
 ```bash
-cd bot
-bun run dev
+bun run dev:bot
 ```
 
-**Web Dashboard:**
+Dashboard:
 ```bash
-cd web
-bun run dev
+bun run dev:web
 ```
 
-Access dashboard at `http://localhost:3000`
+## Environment
 
----
+Bot needs:
+- DISCORD_TOKEN
+- DATABASE_URL
+- FOCUS_TIME (minutes, default 50)
+- SHORT_BREAK (minutes, default 10)
 
-## 📁 Project Structure
+## License
 
-```
-pomora/
-├── bot/             # Discord.js bot implementation
-│   ├── src/
-│   ├── commands/
-│   └── events/
-├── web/             # Next.js web dashboard
-│   ├── app/
-│   ├── components/
-│   └── lib/
-└── bun.lock
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Follow these steps:
-
-1. **Fork and clone**
-   ```bash
-   git clone https://github.com/sirrryasir/pomora.git
-   cd pomora
-   ```
-
-2. **Create feature branch**
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-3. **Make changes and test**
-   ```bash
-   bun run dev
-   ```
-
-4. **Commit with clear messages**
-   ```bash
-   git commit -m "feat: add your feature description"
-   ```
-
-5. **Push and create PR**
-   ```bash
-   git push origin feature/your-feature
-   ```
-
----
-
-## 📄 License
-
-MIT License. See `LICENSE` for details.
-
----
-
-## 👨‍💻 Author
-
-Built by **Yasir Hassan** ([@sirrryasir](https://github.com/sirrryasir))  
-Portfolio: [yaasir.dev](https://www.yaasir.dev)
-
----
-
-**Give it a star if you find it useful!** ⭐
+MIT
