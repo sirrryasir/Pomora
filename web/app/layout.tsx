@@ -90,6 +90,7 @@ export const metadata: Metadata = {
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsProvider } from "@/components/SettingsContext";
 import { SessionProvider } from "@/components/SessionProvider";
+import { Analytics } from '@vercel/analytics/next';
 
 export default function RootLayout({
   children,
@@ -113,6 +114,7 @@ export default function RootLayout({
             </ThemeProvider>
           </SettingsProvider>
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
