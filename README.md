@@ -1,82 +1,51 @@
-<div align="center">
-  <img src="https://github.com/sirrryasir/Pomora/blob/main/web/public/images/logo-bg.png?raw=true" alt="Pomora Logo" width="120" />
-  <h1>Pomora Ecosystem</h1>
-  <p><strong>The Unified Productivity Suite for Discord Communities and Solo Developers.</strong></p>
+# 🍅 Pomora - Time-Based Productivity Bot & Web Dashboard
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Discord](https://img.shields.io/discord/1467251658718445758?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/pomora)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+<div align="center">
+  <p>
+    <a href="https://github.com/sirrryasir/pomora"><img src="https://img.shields.io/badge/Discord%20Bot-TypeScript-5865F2?style=flat-square&logo=discord" alt="Discord" /></a>
+    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-20.x-339933?style=flat-square&logo=nodedotjs" alt="Node.js" /></a>
+    <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs" alt="Next.js" /></a>
+    <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-Package%20Manager-000000?style=flat-square&logo=bun" alt="Bun" /></a>
+  </p>
 </div>
 
 ---
 
-## ⚡ Overview
+## 📌 Overview
 
-Pomora is a **high-performance, open-source productivity bot** designed to turn Discord servers into focused study hubs. It combines a **Voice-Automated Timer** with a **Real-time Web Dashboard**, treating productivity as a collaborative experience.
+**Pomora** is a productivity suite combining a Discord bot and modern web dashboard. Based on the Pomodoro technique, it helps developers and teams manage work sessions, track focus time, and maintain productivity metrics. Use the Discord bot for real-time notifications or the web dashboard for detailed analytics.
 
-Unlike generic timers, Pomora is:
-- **Zero-Friction**: No commands needed to start. Just join a voice channel.
-- **Presence-Aware**: Tracks "Deep Work" time based on voice activity and presence checks.
-- **Unified**: Discord activity syncs instantly to your personal web dashboard.
-
-## 🏗️ Ecosystem Architecture
-
-The project is a monorepo containing two distinct but interconnected applications:
-
-```mermaid
-graph TD
-    User((User))
-    Discord[Discord Client]
-    Web[Web Dashboard]
-    
-    subgraph "Pomora Ecosystem"
-        Bot[Discord Bot Service]
-        DB[(PostgreSQL Sync)]
-    end
-
-    User -->|Voice Join| Discord
-    Discord <-->|Gateway| Bot
-    Bot <-->|Read/Write| DB
-    Web <-->|Read Only| DB
-    User -->|View Analytics| Web
-```
-
-### 📂 Directory Structure
-
-```bash
-pomora/
-├── bot/                # Discord Bot Application (TypeScript)
-│   ├── src/            # Core Logic (Timer, Voice, Commands)
-│   └── README.md       # Bot-Specific Documentation
-├── web/                # Web Dashboard (Next.js 14)
-│   ├── app/            # App Router & Docs
-│   └── README.md       # Web-Specific Documentation
-└── README.md           # You are here
-```
+---
 
 ## ✨ Key Features
 
-### 🤖 Discord Bot
-*See [bot/README.md](bot/README.md) for full details.*
-- **Automated Sessions**: Detects voice channel activity to start/stop timers automatically.
-- **Smart Transitions**: seamless flow between Focus (50m) and Break (10m) modes.
-- **Presence Verification**: "Check-in" buttons ensure users are actually present at their desks.
-- **Dynamic Leaderboards**: Generates high-quality weekly/daily ranking cards in chat.
+- **⏱️ Pomodoro Sessions**: Timer-based work/break cycles with Discord notifications
+- **📊 Analytics Dashboard**: Visual productivity metrics and session history
+- **🔔 Real-time Notifications**: Get pinged in Discord when sessions start/end
+- **👥 Team Tracking**: Monitor team productivity and collaboration patterns
+- **📈 Weekly Reports**: Auto-generated productivity summaries
+- **🎯 Goal Setting**: Define and track focus goals
+- **⚙️ Custom Intervals**: Adjustable work/break durations
 
-### 🌐 Web Dashboard
-*See [web/README.md](web/README.md) for full details.*
-- **Live Sync**: Watch your Discord timer tick in real-time on the browser.
-- **Personal Analytics**: Historical data graphs and session logs.
-- **Documentation**: Integrated documentation site for user guides.
+---
 
-## 🚀 Quick Start (Development)
+## 🛠️ Tech Stack
 
-This guide assumes you want to run the **entire stack** locally.
+| Component | Technology |
+|-----------|------------|
+| **Discord Bot** | discord.js, TypeScript, Node.js |
+| **Web Dashboard** | Next.js 15, React, TailwindCSS |
+| **Database** | MongoDB |
+| **Package Manager** | Bun 1.3.x |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- [Bun](https://bun.sh) (Required runtime)
-- [PostgreSQL](https://www.postgresql.org/) (or a hosted instance like Neon)
-- [Discord Bot Token](https://discord.com/developers/applications)
+- Node.js 20.x or Bun 1.3.x
+- Discord Bot Token (from [Discord Developer Portal](https://discord.com/developers/applications))
+- MongoDB connection string
 
 ### 1. Clone & Install
 ```bash
@@ -86,50 +55,91 @@ bun install
 ```
 
 ### 2. Configure Environment
-You need to set up environment variables for both the bot and web apps.
-
-**Bot (`bot/.env`):**
+Create a `.env.local` file:
 ```env
-DISCORD_TOKEN=your_token
-DATABASE_URL=postgres://user:pass@host:5432/db
+DISCORD_TOKEN=your_discord_bot_token
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/pomora
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-**Web (`web/.env.local`):**
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
-```
+### 3. Start Services
 
-### 3. Run Locally
-
-**To run the Bot:**
+**Discord Bot:**
 ```bash
 cd bot
 bun run dev
 ```
 
-**To run the Web Dashboard:**
+**Web Dashboard:**
 ```bash
 cd web
 bun run dev
 ```
 
+Access dashboard at `http://localhost:3000`
+
+---
+
+## 📁 Project Structure
+
+```
+pomora/
+├── bot/             # Discord.js bot implementation
+│   ├── src/
+│   ├── commands/
+│   └── events/
+├── web/             # Next.js web dashboard
+│   ├── app/
+│   ├── components/
+│   └── lib/
+└── bun.lock
+```
+
+---
+
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+We welcome contributions! Follow these steps:
 
-1.  **Fork the repo** and create your branch (`git checkout -b feature/amazing-feature`).
-2.  **Commit your changes** (`git commit -m 'feat: Add amazing feature'`).
-3.  **Push to the branch** (`git push origin feature/amazing-feature`).
-4.  **Open a Pull Request**.
+1. **Fork and clone**
+   ```bash
+   git clone https://github.com/sirrryasir/pomora.git
+   cd pomora
+   ```
 
-Please ensure your code follows the existing style (ESLint/Prettier) and includes comments where necessary.
+2. **Create feature branch**
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+3. **Make changes and test**
+   ```bash
+   bun run dev
+   ```
+
+4. **Commit with clear messages**
+   ```bash
+   git commit -m "feat: add your feature description"
+   ```
+
+5. **Push and create PR**
+   ```bash
+   git push origin feature/your-feature
+   ```
+
+---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT License. See `LICENSE` for details.
 
 ---
-<div align="center">
-  <sub>Built with ❤️ by Sirr Yasir & the Open Source Community</sub>
-</div>
+
+## 👨‍💻 Author
+
+Built by **Yasir Hassan** ([@sirrryasir](https://github.com/sirrryasir))  
+Portfolio: [yaasir.dev](https://www.yaasir.dev)
+
+---
+
+**Give it a star if you find it useful!** ⭐
